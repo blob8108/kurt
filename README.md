@@ -21,6 +21,19 @@ If you're interested in technical details of how the format works: the code shou
 
 ## Installation
 
+### Option 1 (setup.py)
+
+Download (or git clone) the latest version of Kurt. From the kurt folder
+containing `setup.py` run:
+
+    python setup.py install
+
+This will automatically install kurt, and its dependencies
+[Construct](http://construct.wikispaces.com/) and
+[PyPNG](https://code.google.com/p/pypng/).
+
+### Option 2 (manual install)
+
 Download the latest version of Kurt and extract the `kurt` folder somewhere in your `sys.path` — or in the same directory as your code, if you prefer.
 
 You'll need the **latest version** of the awesome [**Construct**](http://construct.wikispaces.com/) library — used for defining the format. It currently appears to be available [here](http://pypi.python.org/pypi/construct). (I'm using Construct version 2.04).
@@ -60,29 +73,35 @@ You'll probably just want to use the provided `ScratchProjectFile` and `ScratchS
 
 You can import just these classes them using:
 
-    from kurt.files import *
+```python
+from kurt.files import *
+```
 
 Load a file (you'll find a preview file, `game.sb`, saved in the `tests` directory; but feel free to try it with any Scratch project file).
 
-	# Just pass in the absolute or relative path to the file:
-	project = ScratchProjectFile("tests/game.sb")
-	
-    # You can reload the file at any time with .load()
+```python
+# Just pass in the absolute or relative path to the file:
+project = ScratchProjectFile("tests/game.sb")
+
+# You can reload the file at any time with .load()
+```
 
 Inspect project:
 
-    project.info['author'] # u'blob8108'
-    project.stage # <ScratchStageMorph(Stage)>
-    
-    # List fields on object:
-    project.stage.fields.keys() # ['volume', 'hPan', 'sprites', 'lists', 'vars', 'obsoleteSavedState', 'color', 'media', 'sceneStates', 'bounds', 'submorphs', 'zoom', 'isClone', 'blocksBin', 'flags', 'objName', 'owner', 'tempoBPM', 'vPan', 'properties', 'costume']
+```python
+project.info['author'] # u'blob8108'
+project.stage # <ScratchStageMorph(Stage)>
 
-    # Access fields using dot notation:
-    project.stage.tempoBPM # 60
-    project.stage.sprites # OrderedCollection([<ScratchSpriteMorph(ScratchCat)>])
-    
-    cat = project.stage.sprites[0]
-    cat.name # u'ScratchCat'
+# List fields on object:
+project.stage.fields.keys() # ['volume', 'hPan', 'sprites', 'lists', 'vars', 'obsoleteSavedState', 'color', 'media', 'sceneStates', 'bounds', 'submorphs', 'zoom', 'isClone', 'blocksBin', 'flags', 'objName', 'owner', 'tempoBPM', 'vPan', 'properties', 'costume']
+
+# Access fields using dot notation:
+project.stage.tempoBPM # 60
+project.stage.sprites # OrderedCollection([<ScratchSpriteMorph(ScratchCat)>])
+
+cat = project.stage.sprites[0]
+cat.name # u'ScratchCat'
+```
 
 Most of the objects you're interested in, like `ScratchStageMorph` and `ScratchSpriteMorph`, inherit from `UserObject`. You can use `.fields.keys()` to see the available fields on one of these objects.
 
@@ -92,12 +111,16 @@ Inline objects, such as `int` and `bool`, are converted transparently to their P
 
 Make changes:
 
-    cat.vars # {u'vx': 0.0}
-    cat.vars['vx'] = 100
+```python
+cat.vars # {u'vx': 0.0}
+cat.vars['vx'] = 100
+```
 
 Save:
 
-    project.save()
+```python
+project.save()
+```
 
 Now re-open the project with Scratch!
 
@@ -156,12 +179,16 @@ You'll find a script for automatically exporting all the scripts in a project fi
 ### Images
 You can find costumes under a sprite's `costumes` property (similarly for stage `backgrounds`).
 
-    cat.costumes # [<ImageMedia(costume1)>, <ImageMedia(costume2)>]
-    image = cat.costumes[0]
+```python
+cat.costumes # [<ImageMedia(costume1)>, <ImageMedia(costume2)>]
+image = cat.costumes[0]
+```
 
 Save to an external file:
 
-    image.save("scratch_cat.png")
+```python
+image.save("scratch_cat.png")
+```
 
 There's a script under `util/export_images.py` for exporting all the costumes in a Scratch project to separate files, with a folder for each sprite. It automatically makes a folder with the name `<project name> files` to put the images in. Again, just pass it the path to your project.
 
