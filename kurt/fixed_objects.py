@@ -37,6 +37,51 @@ except ImportError:
 from inline_objects import Field
 
 
+def default_colormap(depth):
+    full = 2**depth - 1
+    half = full / 2
+    quarter = full / 4
+    eighth = full / 8
+    three_eighths = full * 3 / 8
+    five_eighths = full * 5 / 8
+    three_quarters = full * 3 / 4
+    seven_eighths = full * 7 / 8
+
+    # This generation comes from the sqeuak source under initializeIndexColors
+    colormap = []
+    # 1-bit colors
+    colormap.append((full, full, full))
+    colormap.append((0.0, 0.0, 0.0))
+    # additional 2-bit colors
+    colormap.append((full, full, full))
+    colormap.append((half, half, half))
+    # additional 4-bit colors
+    colormap.append((full, 0.0, 0.0))
+    colormap.append((0.0, full, 0.0))
+    colormap.append((0.0, 0.0, full))
+    colormap.append((0.0, full, full))
+    colormap.append((full, full, 0.0))
+    colormap.append((full, 0.0, full))
+    colormap.append((eighth, eighth, eighth))
+    colormap.append((quarter, quarter, quarter))
+    colormap.append((three_eighths, three_eighths, three_eighths))
+    colormap.append((five_eighths, five_eighths, five_eighths))
+    colormap.append((three_quarters, three_quarters, three_quarters))
+    colormap.append((seven_eighths, seven_eighths, seven_eighths))
+    # additional 8-bit colors
+    for i in range(32):  # 24 more shades of gray
+        if i % 4 == 0:
+            continue
+        value = full * i / 32
+        colormap.append((value,) * 3)
+    for red in range(6):  # Color "cube" with six steps for each primary color
+        for green in range(6):
+            for blue in range(6):
+                colormap.append((full * red / 6,
+                                 full * green / 6,
+                                 full * blue / 6))
+    return colormap
+
 
 class FixedObject(object):
     """A primitive fixed-format object - eg String, Dictionary.
@@ -454,10 +499,6 @@ class Form(FixedObject, ContainsRefs):
         Rename("bits", Field), # Bitmap
     )
 
-    # TODO: default color values
-    #_squeak_colors = [-1, -1, -1, 0, 0, 0, -1, -1, -1, -128, -128, -128, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, -1, -1, -1, -1, 0, -1, 0, -1, 32, 32, 32, 64, 64, 64, 96, 96, 96, -97, -97, -97, -65, -65, -65, -33, -33, -33, 8, 8, 8, 16, 16, 16, 24, 24, 24, 40, 40, 40, 48, 48, 48, 56, 56, 56, 72, 72, 72, 80, 80, 80, 88, 88, 88, 104, 104, 104, 112, 112, 112, 120, 120, 120, -121, -121, -121, -113, -113, -113, -105, -105, -105, -89, -89, -89, -81, -81, -81, -73, -73, -73, -57, -57, -57, -49, -49, -49, -41, -41, -41, -25, -25, -25, -17, -17, -17, -9, -9, -9, 0, 0, 0, 0, 51, 0, 0, 102, 0, 0, -103, 0, 0, -52, 0, 0, -1, 0, 0, 0, 51, 0, 51, 51, 0, 102, 51, 0, -103, 51, 0, -52, 51, 0, -1, 51, 0, 0, 102, 0, 51, 102, 0, 102, 102, 0, -103, 102, 0, -52, 102, 0, -1, 102, 0, 0, -103, 0, 51, -103, 0, 102, -103, 0, -103, -103, 0, -52, -103, 0, -1, -103, 0, 0, -52, 0, 51, -52, 0, 102, -52, 0, -103, -52, 0, -52, -52, 0, -1, -52, 0, 0, -1, 0, 51, -1, 0, 102, -1, 0, -103, -1, 0, -52, -1, 0, -1, -1, 51, 0, 0, 51, 51, 0, 51, 102, 0, 51, -103, 0, 51, -52, 0, 51, -1, 0, 51, 0, 51, 51, 51, 51, 51, 102, 51, 51, -103, 51, 51, -52, 51, 51, -1, 51, 51, 0, 102, 51, 51, 102, 51, 102, 102, 51, -103, 102, 51, -52, 102, 51, -1, 102, 51, 0, -103, 51, 51, -103, 51, 102, -103, 51, -103, -103, 51, -52, -103, 51, -1, -103, 51, 0, -52, 51, 51, -52, 51, 102, -52, 51, -103, -52, 51, -52, -52, 51, -1, -52, 51, 0, -1, 51, 51, -1, 51, 102, -1, 51, -103, -1, 51, -52, -1, 51, -1, -1, 102, 0, 0, 102, 51, 0, 102, 102, 0, 102, -103, 0, 102, -52, 0, 102, -1, 0, 102, 0, 51, 102, 51, 51, 102, 102, 51, 102, -103, 51, 102, -52, 51, 102, -1, 51, 102, 0, 102, 102, 51, 102, 102, 102, 102, 102, -103, 102, 102, -52, 102, 102, -1, 102, 102, 0, -103, 102, 51, -103, 102, 102, -103, 102, -103, -103, 102, -52, -103, 102, -1, -103, 102, 0, -52, 102, 51, -52, 102, 102, -52, 102, -103, -52, 102, -52, -52, 102, -1, -52, 102, 0, -1, 102, 51, -1, 102, 102, -1, 102, -103, -1, 102, -52, -1, 102, -1, -1, -103, 0, 0, -103, 51, 0, -103, 102, 0, -103, -103, 0, -103, -52, 0, -103, -1, 0, -103, 0, 51, -103, 51, 51, -103, 102, 51, -103, -103, 51, -103, -52, 51, -103, -1, 51, -103, 0, 102, -103, 51, 102, -103, 102, 102, -103, -103, 102, -103, -52, 102, -103, -1, 102, -103, 0, -103, -103, 51, -103, -103, 102, -103, -103, -103, -103, -103, -52, -103, -103, -1, -103, -103, 0, -52, -103, 51, -52, -103, 102, -52, -103, -103, -52, -103, -52, -52, -103, -1, -52, -103, 0, -1, -103, 51, -1, -103, 102, -1, -103, -103, -1, -103, -52, -1, -103, -1, -1, -52, 0, 0, -52, 51, 0, -52, 102, 0, -52, -103, 0, -52, -52, 0, -52, -1, 0, -52, 0, 51, -52, 51, 51, -52, 102, 51, -52, -103, 51, -52, -52, 51, -52, -1, 51, -52, 0, 102, -52, 51, 102, -52, 102, 102, -52, -103, 102, -52, -52, 102, -52, -1, 102, -52, 0, -103, -52, 51, -103, -52, 102, -103, -52, -103, -103, -52, -52, -103, -52, -1, -103, -52, 0, -52, -52, 51, -52, -52, 102, -52, -52, -103, -52, -52, -52, -52, -52, -1, -52, -52, 0, -1, -52, 51, -1, -52, 102, -1, -52, -103, -1, -52, -52, -1, -52, -1, -1, -1, 0, 0, -1, 51, 0, -1, 102, 0, -1, -103, 0, -1, -52, 0, -1, -1, 0, -1, 0, 51, -1, 51, 51, -1, 102, 51, -1, -103, 51, -1, -52, 51, -1, -1, 51, -1, 0, 102, -1, 51, 102, -1, 102, 102, -1, -103, 102, -1, -52, 102, -1, -1, 102, -1, 0, -103, -1, 51, -103, -1, 102, -103, -1, -103, -103, -1, -52, -103, -1, -1, -103, -1, 0, -52, -1, 51, -52, -1, 102, -52, -1, -103, -52, -1, -52, -52, -1, -1, -52, -1, 0, -1, -1, 51, -1, -1, 102, -1, -1, -103, -1, -1, -52, -1, -1, -1, -1]
-    #_squeak_colors = [_squeak_colors[i:i+4] for i in range(0, len(_squeak_colors), 4)]
-
     @property
     def value(self):
         return dict((k, getattr(self, k)) for k in self.__dict__
@@ -492,21 +533,24 @@ class Form(FixedObject, ContainsRefs):
         elif self.depth == 16:
             raise NotImplementedError # TODO: depth 16
         elif self.depth <= 8:
-            if not hasattr(self, 'colors') or not self.colors:
-                raise NotImplementedError("TODO: default color values")
-                # default color values are found in squeak_colors
             length = len(pixel_bytes) * 8 / self.depth
-            pixels_construct = BitStruct(
-                "", MetaRepeater(length, Bits("pixels", self.depth), ), )
+            repeater = MetaRepeater(length, Bits("pixels", self.depth))
+            pixels_construct = BitStruct("", repeater)
             pixels = pixels_construct.parse(pixel_bytes).pixels
+            if hasattr(self, 'colors') and self.colors:
+                colors = self.colors
+            else:
+                colors = default_colormap(self.depth)
             for pixel in pixels:
-                yield self.colors[pixel]
+                yield colors[pixel]
 
     def to_array(self):
         rgba = array('B')
         for pixel in self._to_pixels():
-            for color in pixel.to_8bit():
-                rgba.append(color)
+            if isinstance(pixel, tuple):
+                rgba.extend(pixel)
+            else:
+                rgba.extend(pixel.to_8bit())
             if not isinstance(pixel, TranslucentColor):
                 rgba.append(255)  # Add alpha channel
         return self.width, self.height, rgba
