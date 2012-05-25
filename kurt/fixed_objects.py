@@ -37,6 +37,52 @@ except ImportError:
 from inline_objects import Field
 
 
+def default_colormap(depth):
+    full = 2**depth - 1
+    half = full / 2
+    quarter = full / 4
+    eighth = full / 8
+    three_eighths = full * 3 / 8
+    five_eighths = full * 5 / 8
+    three_quarters = full * 3 / 4
+    seven_eighths = full * 7 / 8
+
+    # This generation comes from the sqeuak source under initializeIndexColors
+    colormap = []
+    # 1-bit colors
+    colormap.append((full, full, full, full))
+    colormap.append((0.0, 0.0, 0.0, full))
+    # additional 2-bit colors
+    colormap.append((full, full, full, full))
+    colormap.append((half, half, half, full))
+    # additional 4-bit colors
+    colormap.append((full, 0.0, 0.0, full))
+    colormap.append((0.0, full, 0.0, full))
+    colormap.append((0.0, 0.0, full, full))
+    colormap.append((0.0, full, full, full))
+    colormap.append((full, full, 0.0, full))
+    colormap.append((full, 0.0, full, full))
+    colormap.append((eighth, eighth, eighth, full))
+    colormap.append((quarter, quarter, quarter, full))
+    colormap.append((three_eighths, three_eighths, three_eighths, full))
+    colormap.append((five_eighths, five_eighths, five_eighths, full))
+    colormap.append((three_quarters, three_quarters, three_quarters, full))
+    colormap.append((seven_eighths, seven_eighths, seven_eighths, full))
+    # additional 8-bit colors
+    for i in range(32):  # 24 more shades of gray
+        if i % 4 == 0:
+            continue
+        value = full * i / 32
+        colormap.append((value, value, value, full))
+    for red in range(6):  # Color "cube" with six steps for each primary color
+        for blue in range(6):
+            for green in range(6):
+                colormap.append((full * red / 5,
+                                 full * green / 5,
+                                 full * blue / 5,
+                                 full))
+    return colormap
+
 
 class FixedObject(object):
     """A primitive fixed-format object - eg String, Dictionary.
@@ -464,19 +510,6 @@ class Bitmap(FixedObjectByteArray, FixedObjectWithRepeater):
         return cls(data)
 
 
-
-# Default color values, used by Form
-squeak_color_data = "\xff\xff\xff\x00\x00\x00\xff\xff\xff\x80\x80\x80\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\xff\xff\xff\xff\x00\xff\x00\xff   @@@```\x9f\x9f\x9f\xbf\xbf\xbf\xdf\xdf\xdf\x08\x08\x08\x10\x10\x10\x18\x18\x18(((000888HHHPPPXXXhhhpppxxx\x87\x87\x87\x8f\x8f\x8f\x97\x97\x97\xa7\xa7\xa7\xaf\xaf\xaf\xb7\xb7\xb7\xc7\xc7\xc7\xcf\xcf\xcf\xd7\xd7\xd7\xe7\xe7\xe7\xef\xef\xef\xf7\xf7\xf7\x00\x00\x00\x003\x00\x00f\x00\x00\x99\x00\x00\xcc\x00\x00\xff\x00\x00\x003\x0033\x00f3\x00\x993\x00\xcc3\x00\xff3\x00\x00f\x003f\x00ff\x00\x99f\x00\xccf\x00\xfff\x00\x00\x99\x003\x99\x00f\x99\x00\x99\x99\x00\xcc\x99\x00\xff\x99\x00\x00\xcc\x003\xcc\x00f\xcc\x00\x99\xcc\x00\xcc\xcc\x00\xff\xcc\x00\x00\xff\x003\xff\x00f\xff\x00\x99\xff\x00\xcc\xff\x00\xff\xff3\x00\x0033\x003f\x003\x99\x003\xcc\x003\xff\x003\x0033333f33\x9933\xcc33\xff33\x00f33f3ff3\x99f3\xccf3\xfff3\x00\x9933\x993f\x993\x99\x993\xcc\x993\xff\x993\x00\xcc33\xcc3f\xcc3\x99\xcc3\xcc\xcc3\xff\xcc3\x00\xff33\xff3f\xff3\x99\xff3\xcc\xff3\xff\xfff\x00\x00f3\x00ff\x00f\x99\x00f\xcc\x00f\xff\x00f\x003f33ff3f\x993f\xcc3f\xff3f\x00ff3fffff\x99ff\xccff\xffff\x00\x99f3\x99ff\x99f\x99\x99f\xcc\x99f\xff\x99f\x00\xccf3\xccff\xccf\x99\xccf\xcc\xccf\xff\xccf\x00\xfff3\xffff\xfff\x99\xfff\xcc\xfff\xff\xff\x99\x00\x00\x993\x00\x99f\x00\x99\x99\x00\x99\xcc\x00\x99\xff\x00\x99\x003\x9933\x99f3\x99\x993\x99\xcc3\x99\xff3\x99\x00f\x993f\x99ff\x99\x99f\x99\xccf\x99\xfff\x99\x00\x99\x993\x99\x99f\x99\x99\x99\x99\x99\xcc\x99\x99\xff\x99\x99\x00\xcc\x993\xcc\x99f\xcc\x99\x99\xcc\x99\xcc\xcc\x99\xff\xcc\x99\x00\xff\x993\xff\x99f\xff\x99\x99\xff\x99\xcc\xff\x99\xff\xff\xcc\x00\x00\xcc3\x00\xccf\x00\xcc\x99\x00\xcc\xcc\x00\xcc\xff\x00\xcc\x003\xcc33\xccf3\xcc\x993\xcc\xcc3\xcc\xff3\xcc\x00f\xcc3f\xccff\xcc\x99f\xcc\xccf\xcc\xfff\xcc\x00\x99\xcc3\x99\xccf\x99\xcc\x99\x99\xcc\xcc\x99\xcc\xff\x99\xcc\x00\xcc\xcc3\xcc\xccf\xcc\xcc\x99\xcc\xcc\xcc\xcc\xcc\xff\xcc\xcc\x00\xff\xcc3\xff\xccf\xff\xcc\x99\xff\xcc\xcc\xff\xcc\xff\xff\xff\x00\x00\xff3\x00\xfff\x00\xff\x99\x00\xff\xcc\x00\xff\xff\x00\xff\x003\xff33\xfff3\xff\x993\xff\xcc3\xff\xff3\xff\x00f\xff3f\xffff\xff\x99f\xff\xccf\xff\xfff\xff\x00\x99\xff3\x99\xfff\x99\xff\x99\x99\xff\xcc\x99\xff\xff\x99\xff\x00\xcc\xff3\xcc\xfff\xcc\xff\x99\xcc\xff\xcc\xcc\xff\xff\xcc\xff\x00\xff\xff3\xff\xfff\xff\xff\x99\xff\xff\xcc\xff\xff\xff\xff"
-squeak_colors = []
-for i in range(0, len(squeak_color_data), 4):
-    color = squeak_color_data[i:i+4]
-    squeak_colors.append(array("B", (ord(x) for x in color[i:i+4])))
-#    alpha = color[3]
-#    rgb = color[0:3]
-#    squeak_colors.append(TranslucentColor.from_32bit_raw(alpha + rgb))
-del squeak_color_data
-
-
 class Form(FixedObject, ContainsRefs):
     """A rectangular array of pixels, used for holding images.
     Attributes:
@@ -531,42 +564,33 @@ class Form(FixedObject, ContainsRefs):
     
     def _to_pixels(self):
         pixel_bytes = self.bits.value
-        
         if self.depth == 32:
             for i in range(0, len(pixel_bytes), 4):
                 (a, r, g, b) = (ord(x) for x in pixel_bytes[i:i+4])
                 if a == 0 and (r > 0 or g > 0 or b > 0):
                     a = 255
                 yield array("B", (r, g, b, a))
-        
-        else:
-            if self.depth == 16:
-                raise NotImplementedError # TODO: depth 16
-            
-            elif self.depth <= 8:
-                if self.colors is None:
-                    colors = squeak_colors # default color values
-                else:
-                    colors = [color.to_rgba_array() for color in self.colors]
-                
-                length = len(pixel_bytes) * 8 / self.depth
-                pixels_construct = BitStruct("",
-                    MetaRepeater(length,
-                        Bits("pixels", self.depth),
-                    ),
-                )
-                pixels = pixels_construct.parse(pixel_bytes).pixels
-                
-                for pixel in pixels:
-                    yield colors[pixel]
+        elif self.depth == 16:
+            raise NotImplementedError # TODO: depth 16
+        elif self.depth <= 8:
+            if self.colors:
+                colors = [color.to_rgba_array() for color in self.colors]
+            else:
+                colors = default_colormap(self.depth)
+            length = len(pixel_bytes) * 8 / self.depth
+            repeater = MetaRepeater(length, Bits("pixels", self.depth))
+            pixels_construct = BitStruct("", repeater)
+            for pixel in pixels_construct.parse(pixel_bytes).pixels:
+                yield colors[pixel]
     
     def to_array(self):
         rgba = array('B') #unsigned byte
         pixel_count = 0
         num_pixels = self.width * self.height
-        
-        # Rows are rounded to be a whole number of words (32 bits) long.
-        # I *think* this is because Bitmaps are run-length encoded in 32-bit segments.
+
+        # Rows are rounded to be a whole number of words (32 bits) long.  I
+        # *think* this is because Bitmaps are run-length encoded in 32-bit
+        # segments.
         skip = 0
         if self.depth <= 8:
             pixels_per_word = 32 / self.depth
@@ -581,7 +605,7 @@ class Form(FixedObject, ContainsRefs):
             except StopIteration:
                 break
             
-            rgba += color
+            rgba.extend(color)
             
             pixel_count += 1
             x += 1            
