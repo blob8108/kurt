@@ -37,50 +37,41 @@ except ImportError:
 from inline_objects import Field
 
 
-def default_colormap(depth):
-    full = 2**depth - 1
-    half = full / 2
-    quarter = full / 4
-    eighth = full / 8
-    three_eighths = full * 3 / 8
-    five_eighths = full * 5 / 8
-    three_quarters = full * 3 / 4
-    seven_eighths = full * 7 / 8
-
+def default_colormap():
     # This generation comes from the sqeuak source under initializeIndexColors
     colormap = []
     # 1-bit colors
-    colormap.append((full, full, full, full))
-    colormap.append((0.0, 0.0, 0.0, full))
+    colormap.append((255, 255, 255, 255))
+    colormap.append((0.0, 0.0, 0.0, 255))
     # additional 2-bit colors
-    colormap.append((full, full, full, full))
-    colormap.append((half, half, half, full))
+    colormap.append((255, 255, 255, 255))
+    colormap.append((127, 127, 127, 255))
     # additional 4-bit colors
-    colormap.append((full, 0.0, 0.0, full))
-    colormap.append((0.0, full, 0.0, full))
-    colormap.append((0.0, 0.0, full, full))
-    colormap.append((0.0, full, full, full))
-    colormap.append((full, full, 0.0, full))
-    colormap.append((full, 0.0, full, full))
-    colormap.append((eighth, eighth, eighth, full))
-    colormap.append((quarter, quarter, quarter, full))
-    colormap.append((three_eighths, three_eighths, three_eighths, full))
-    colormap.append((five_eighths, five_eighths, five_eighths, full))
-    colormap.append((three_quarters, three_quarters, three_quarters, full))
-    colormap.append((seven_eighths, seven_eighths, seven_eighths, full))
+    colormap.append((255, 0.0, 0.0, 255))
+    colormap.append((0.0, 255, 0.0, 255))
+    colormap.append((0.0, 0.0, 255, 255))
+    colormap.append((0.0, 255, 255, 255))
+    colormap.append((255, 255, 0.0, 255))
+    colormap.append((255, 0.0, 255, 255))
+    colormap.append((31, 31, 31, 255))
+    colormap.append((63, 63, 63, 255))
+    colormap.append((95, 95, 95, 255))
+    colormap.append((159, 159, 159, 255))
+    colormap.append((191, 191, 191, 255))
+    colormap.append((223, 223, 223, 255))
     # additional 8-bit colors
     for i in range(32):  # 24 more shades of gray
         if i % 4 == 0:
             continue
-        value = full * i / 32
-        colormap.append((value, value, value, full))
+        value = 255 * i / 32
+        colormap.append((value, value, value, 255))
     for red in range(6):  # Color "cube" with six steps for each primary color
         for blue in range(6):
             for green in range(6):
-                colormap.append((full * red / 5,
-                                 full * green / 5,
-                                 full * blue / 5,
-                                 full))
+                colormap.append((255 * red / 5,
+                                 255 * green / 5,
+                                 255 * blue / 5,
+                                 255))
     return colormap
 
 
@@ -576,7 +567,7 @@ class Form(FixedObject, ContainsRefs):
             if self.colors:
                 colors = [color.to_rgba_array() for color in self.colors]
             else:
-                colors = default_colormap(self.depth)
+                colors = default_colormap()
             length = len(pixel_bytes) * 8 / self.depth
             repeater = MetaRepeater(length, Bits("pixels", self.depth))
             pixels_construct = BitStruct("", repeater)
