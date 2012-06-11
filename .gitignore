@@ -1,6 +1,8 @@
 *.pyc
-construct/
-tests/* files/
-dist/
-kurt.egg-info/
 *.sb
+*.egg-info/
+build/
+construct/
+dist/
+files/
+tests/

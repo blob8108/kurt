@@ -49,3 +49,5 @@ from kurt.objtable import *
 from kurt.files import *
 from kurt.scripts import *
 from kurt.scratchblocks import parse_scratchblocks, ParseError
+
+__version__ = '1.2.2dev.bboe'

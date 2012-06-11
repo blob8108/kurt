@@ -23,6 +23,27 @@ If you're interested in technical details of how the format works: the code shou
 
 ## Installation
 
+Options 1 and 2 will automatically install kurt, and its dependencies
+[Construct](http://construct.wikispaces.com/) and
+[PyPNG](https://code.google.com/p/pypng/).
+
+### Option 1 (pip or easy_install)
+
+If you have either `easy_install` or `pip` installed, installation is as simple
+as running one of the following:
+
+    pip install kurt
+    easy_install kurt
+
+### Option 2 (setup.py)
+
+Download (or git clone) the latest version of Kurt. From the kurt folder
+containing `setup.py` run:
+
+    python setup.py install
+
+### Option 2 (manual install)
+
 Download the latest version of Kurt and extract the `kurt` folder somewhere in your `sys.path` — or in the same directory as your code, if you prefer.
 
 You'll need the **latest version** of the awesome [**Construct**](http://construct.wikispaces.com/) library — used for defining the format. It currently appears to be available [here](http://pypi.python.org/pypi/construct). (I'm using Construct version 2.04).

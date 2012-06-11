@@ -29,10 +29,12 @@ outputs [scratchblocks] formatted code for Scratch forums/wiki.
 #
 # - Can't have empty dropdowns eg. broadcast [ v]
 
+import sys
+
 try:
     import kurt
 except ImportError: # try and find kurt directory
-    import os, sys
+    import os
     path_to_file = os.path.join(os.getcwd(), __file__)
     path_to_lib = os.path.split(os.path.split(path_to_file)[0])[0]
     sys.path.append(path_to_lib)
