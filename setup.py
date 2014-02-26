@@ -18,6 +18,7 @@ setup(name = 'kurt',
       license = 'LGPL',
       packages = ['kurt', 'kurt.scratch14', 'kurt.scratch20'],
       scripts = glob.glob('util/*'),
+      test_suite='tests',
       classifiers = [
         "Programming Language :: Python",
         "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
@@ -36,4 +37,3 @@ Python library for reading/writing Scratch (.sb & .sprite) files.
 Also includes a de/compiler for converting Scratch projects <---> folder structure structure with project contents.
 """
 )
-

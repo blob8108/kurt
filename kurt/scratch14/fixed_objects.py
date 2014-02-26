@@ -211,6 +211,7 @@ class Collection(FixedObjectWithRepeater, ContainsRefs):
         if name in ('append', 'count', 'extend', 'index', 'insert', 'pop',
                     'remove', 'reverse', 'sort'):
             return getattr(self.value, name)
+        return super(Collection, self).__getattr__(name)
 
     def __getitem__(self, index):
         return self.value[index]
@@ -265,6 +266,8 @@ class Dictionary(Collection):
         return cls(value)
 
     def __getattr__(self, name):
+        if name.startswith('__') and name.endswith('__'):
+            return super(Dictionary, self).__getattr__(name)
         return getattr(self.value, name)
 
     def copy(self):

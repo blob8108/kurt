@@ -233,7 +233,7 @@ class Serializer(object):
                 form = v14_image.compositeForm or v14_image.form
                 (width, height, rgba_array) = form.to_array()
                 size = (width, height)
-                pil_image = PIL.Image.fromstring("RGBA", size, rgba_array)
+                pil_image = PIL.Image.frombytes("RGBA", size, rgba_array)
                 image = kurt.Image(pil_image)
             return kurt.Costume(v14_image.name, image,
                                 v14_image.rotationCenter)
@@ -251,7 +251,7 @@ class Serializer(object):
                 pil_image = kurt_costume.image.pil_image
                 pil_image = pil_image.convert("RGBA")
                 (width, height) = pil_image.size
-                rgba_string = pil_image.tostring()
+                rgba_string = pil_image.tobytes()
 
                 v14_image = self.UserObject("ImageMedia",
                     name = unicode(kurt_costume.name),
