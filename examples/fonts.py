@@ -34,14 +34,14 @@ TEXT_COLOR = (0, 0, 0)
 BG_COLOR = (255, 255, 255)
 
 # Height of character images in pixels
-FONT_SIZE = 24
+FONT_SIZE = 100
 
 # Name of the .sb file
-PROJECT_NAME = "fonts"
+PROJECT_NAME = "Fonts"
 
 FONT_PATHS = [
     # Add the full path to your font files here, for example:
-    "/Library/Fonts/Museo500-Regular.otf",
+    "url('http://www.fontsaddict.com/fontface/analogue-reduced-45-light.ttf');}",
 
 ]
 
@@ -51,7 +51,7 @@ CHARACTERS = ''.join(map(chr, range(32, 127)))
 
 # Set the Fonts.Message variable
 # Used in the demo script
-MESSAGE = "The quick brown fox jumps over the lazy dog. "
+MESSAGE = "Dots "
 
 
 ### End of settings ###
