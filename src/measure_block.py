@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """Script for extracting block heights from Scratch 1.4.
 
 Requires the following change to the Scratch source code:
@@ -7,6 +10,7 @@ Requires the following change to the Scratch source code:
 Added to the end of Scratch-UI-Panes -> ScratchFrameMorph -> file read/write -> installNewProject:
 
 """
+
 import os
 import sys
 
@@ -18,9 +22,7 @@ path_to_lib = os.path.split(os.path.split(path_to_file)[0])[0]
 sys.path.insert(0, path_to_lib)
 import kurt
 
-import heights
 from heights import bheights
-
 
 
 def measure_height(blocks):
@@ -35,12 +37,13 @@ def measure_height(blocks):
     s = p.stage
     s.scripts.append(kurt.Script(blocks))
     s.scripts.append(kurt.Script([kurt.Block("say")]))
-    #p.sprites.append(s)
+    # p.sprites.append(s)
     p.convert("scratch14")
     p.save(PATH)
 
     mtime = os.stat(PATH).st_mtime
     os.system("open %s" % PATH)
+
     while 1:
         try:
             if os.stat(PATH).st_mtime != mtime:
@@ -54,8 +57,8 @@ def measure_height(blocks):
     (x1, y1) = scripts[0].pos
     (x2, y2) = scripts[1].pos
     height = y2 - y1 - 15
-    return height
 
+    return height
 
 
 blacklist = set([
@@ -66,7 +69,7 @@ blacklist = set([
 ])
 
 
-#for bt in kurt.plugin.Kurt.blocks:
+# for bt in kurt.plugin.Kurt.blocks:
 #    if "scratch14" in bt.conversions:
 #        command = bt.convert("scratch14").command
 #        if command in bheights or command in blacklist:

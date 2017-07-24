@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2012 Tim Radvan
 #
@@ -25,6 +26,7 @@ Uses decompiled Scratch 2.0 SWF source from showmycode.com.
 
 import os
 
+
 def relpath(path):
     return os.path.join(os.path.dirname(__file__), path)
 
@@ -34,7 +36,7 @@ f = open(relpath("showmycode.com.txt"))
 contents = f.read()
 f.close()
 
-contents = contents.replace("\r\n", "\n").replace("\xef\xbb\xbf","")
+contents = contents.replace("\r\n", "\n").replace("\xef\xbb\xbf", "")
 
 f = open(relpath("showmycode.com.txt"), "w")
 f.write(contents)
