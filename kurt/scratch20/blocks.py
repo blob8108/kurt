@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2012 Tim Radvan
 #
 # This file is part of Kurt.
@@ -37,8 +40,8 @@ CATEGORY_IDS = {
     21: "wedo",
     30: "midi",
     91: "midi",
-    98: "obsolete", # --> we should use the 1.4 blockspecs for these instead
-    99: "obsolete", # scrolling
+    98: "obsolete",  # --> we should use the 1.4 blockspecs for these instead
+    99: "obsolete",  # scrolling
 
     # for stage?
     102: "looks",
@@ -50,10 +53,10 @@ CATEGORY_IDS = {
 SHAPE_FLAGS = {
     ' ':  'stack',
     'b':  'boolean',
-    'c':  'stack', # cblock
+    'c':  'stack',  # cblock
     'r':  'reporter',
-    'e':  'stack', # eblock
-    'cf': 'cap', # cblock
+    'e':  'stack',  # eblock
+    'cf': 'cap',  # cblock
     'f':  'cap',
     'h':  'hat',
 }
@@ -80,8 +83,10 @@ def parse_spec(spec, defaults):
         if INSERT_RE.match(part):
             default = defaults.pop(0) if defaults else None
             part = kurt.Insert(INSERT_SHAPES[part[:2]], part[3:] or None,
-                    default=default)
+                               default=default)
+
         yield part
+
 
 def make_spec(parts):
     spec = ""
@@ -89,10 +94,14 @@ def make_spec(parts):
         if isinstance(part, kurt.Insert):
             insert = part
             part = SHAPE_INSERTS[insert.shape]
+
             if insert.kind:
                 part += "." + insert.kind
+
         spec += part
+
     return spec
+
 
 def blockify(blockspec):
     if len(blockspec) > 1:
@@ -113,9 +122,11 @@ def blockify(blockspec):
         if pbt.text in ("wait until %s", "repeat until %s%s",
                         "forever if %s%s"):
             pbt.inserts[0].unevaluated = True
+
         return pbt
     else:
         return None
+
 
 def make_block_types():
     global commands
@@ -140,11 +151,13 @@ def make_block_types():
     # Blockify
     return map(blockify, commands)
 
+
 def custom_block(spec, input_names, defaults):
     input_names = list(input_names)
     parts = list(parse_spec(spec, defaults))
+
     for part in parts:
         if isinstance(part, kurt.Insert):
             part.name = input_names.pop(0)
-    return kurt.CustomBlockType("stack", parts)
 
+    return kurt.CustomBlockType("stack", parts)
