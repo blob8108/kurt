@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2012 Tim Radvan
 #
 # This file is part of Kurt.
@@ -79,9 +82,11 @@ only convert features between a subset of formats.
 __version__ = '2.0.7'
 
 from collections import OrderedDict
+
 import re
 import os
 import random
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -91,14 +96,13 @@ import PIL.Image
 import wave
 
 
-
 #-- Utils --#
 
 def _clean_filename(name):
     """Strip non-alphanumeric characters to makes name safe to be used as
     filename."""
-    return re.sub("[^\w .]", "", name)
 
+    return re.sub("[^\w .]", "", name)
 
 
 #-- Project: main class --#
@@ -204,7 +208,7 @@ class Project(object):
 
     def __repr__(self):
         return "<%s.%s()>" % (self.__class__.__module__,
-                self.__class__.__name__)
+                              self.__class__.__name__)
 
     def get_sprite(self, name):
         """Get a sprite from :attr:`sprites` by name.
@@ -212,6 +216,7 @@ class Project(object):
         Returns None if the sprite isn't found.
 
         """
+
         for sprite in self.sprites:
             if sprite.name == name:
                 return sprite
@@ -225,6 +230,7 @@ class Project(object):
         To convert to a different format, use :attr:`save()`.
 
         """
+
         if self._plugin:
             return self._plugin.name
 
@@ -248,6 +254,7 @@ class Project(object):
         :raises: :py:class:`ValueError` if the format doesn't exist.
 
         """
+
         path_was_string = isinstance(path, basestring)
         if path_was_string:
             (folder, filename) = os.path.split(path)
@@ -268,15 +275,19 @@ class Project(object):
         project = plugin.load(fp)
         if path_was_string:
             fp.close()
+
         project.convert(plugin)
+
         if isinstance(path, basestring):
             project.path = path
             if not project.name:
                 project.name = name
+
         return project
 
     def copy(self):
         """Return a new Project instance, deep-copying all the attributes."""
+
         p = Project()
         p.name = self.name
         p.path = self.path
@@ -309,6 +320,7 @@ class Project(object):
         p.tempo = self.tempo
         p.notes = self.notes
         p.author = self.author
+
         return p
 
     def convert(self, format):
@@ -322,7 +334,9 @@ class Project(object):
         :raises: :class:`ValueError` if the format doesn't exist.
 
         """
+
         self._plugin = kurt.plugin.Kurt.get_plugin(format)
+
         return list(self._normalize())
 
     def save(self, path=None, debug=False):
@@ -371,7 +385,7 @@ class Project(object):
             (name, extension) = os.path.splitext(filename)
 
             # get plugin from extension
-            if path: # only if not using self.path
+            if path:  # only if not using self.path
                 try:
                     plugin = kurt.plugin.Kurt.get_plugin(extension=extension)
                 except ValueError:
@@ -396,9 +410,12 @@ class Project(object):
 
         for m in p.convert(plugin):
             print m
+
         result = p._save(fp)
+
         if path:
             fp.close()
+
         return result if debug else p.path
 
     def _save(self, fp):
@@ -443,12 +460,12 @@ class Project(object):
             for (name, var) in thing.variables.items():
                 if not var.watcher:
                     var.watcher = kurt.Watcher(thing,
-                            kurt.Block("var", name), is_visible=False)
+                                               kurt.Block("var", name), is_visible=False)
                     self.actors.append(var.watcher)
             for (name, list_) in thing.lists.items():
                 if not list_.watcher:
                     list_.watcher = kurt.Watcher(thing,
-                            kurt.Block("list", name), is_visible=False)
+                                                 kurt.Block("list", name), is_visible=False)
                     self.actors.append(list_.watcher)
 
         # notes - line endings
@@ -461,10 +478,10 @@ class Project(object):
                 if isinstance(block.type, CustomBlockType):
                     if "Custom Blocks" not in self._plugin.features:
                         raise BlockNotSupported(
-                                "%s doesn't support custom blocks"
-                                % self._plugin.display_name)
+                            "%s doesn't support custom blocks"
+                            % self._plugin.display_name)
 
-                else: # BlockType
+                else:  # BlockType
                     pbt = block.type.convert(self._plugin)
             except BlockNotSupported, err:
                 err.message += ". Caused by: %r" % block
@@ -531,20 +548,20 @@ class UnsupportedFeature(object):
     Output once by Project.convert for each occurence of the feature.
 
     """
+
     def __init__(self, feature, obj):
         self.feature = kurt.plugin.Feature.get(feature)
         self.obj = obj
 
     def __repr__(self):
         return "<%s.%s(%s)>" % (self.__class__.__module__,
-                self.__class__.__name__, unicode(self))
+                                self.__class__.__name__, unicode(self))
 
     def __str__(self):
         return "UnsupportedFeature: %s" % unicode(self)
 
     def __unicode__(self):
         return u"%r: %r" % (self.feature.name, self.obj)
-
 
 
 #-- Errors --#
@@ -556,6 +573,7 @@ class UnknownFormat(Exception):
     file extension.
 
     """
+
     pass
 
 
@@ -574,6 +592,7 @@ class BlockNotSupported(Exception):
     :class:`PluginBlockType` for the given plugin.
 
     """
+
     pass
 
 
@@ -584,8 +603,8 @@ class VectorImageError(Exception):
     give a warning instead when the Project is converted.
 
     """
-    pass
 
+    pass
 
 
 #-- Actors & Scriptables --#
@@ -674,7 +693,10 @@ class Scriptable(object):
 
     def copy(self, o=None):
         """Return a new instance, deep-copying all the attributes."""
-        if o is None: o = self.__class__(self.project)
+
+        if o is None:
+            o = self.__class__(self.project)
+
         o.scripts = [s.copy() for s in self.scripts]
         o.variables = dict((n, v.copy()) for (n, v) in self.variables.items())
         o.lists = dict((n, l.copy()) for (n, l) in self.lists.items())
@@ -682,6 +704,7 @@ class Scriptable(object):
         o.sounds = [s.copy() for s in self.sounds]
         o.costume_index = self.costume_index
         o.volume = self.volume
+
         return o
 
     @property
@@ -691,6 +714,7 @@ class Scriptable(object):
         None if no costume is selected.
 
         """
+
         if self.costume:
             return self.costumes.index(self.costume)
 
@@ -708,6 +732,7 @@ class Scriptable(object):
         reference.
 
         """
+
         self.scripts.append(kurt.text.parse(text, self))
 
 
@@ -741,6 +766,7 @@ class Stage(Scriptable):
     @property
     def backgrounds(self):
         """Alias for :attr:`costumes`."""
+
         return self.costumes
 
     @backgrounds.setter
@@ -749,11 +775,12 @@ class Stage(Scriptable):
 
     def __repr__(self):
         return "<%s.%s()>" % (self.__class__.__module__,
-                self.__class__.__name__)
+                              self.__class__.__name__)
 
     def _normalize(self):
         if not self.costume and not self.costumes:
             self.costume = Costume("blank", Image.new(self.SIZE, self.COLOR))
+
         Scriptable._normalize(self)
 
 
@@ -824,6 +851,7 @@ class Sprite(Scriptable, Actor):
 
     def copy(self):
         """Return a new instance, deep-copying all the attributes."""
+
         o = self.__class__(self.project, self.name)
         Scriptable.copy(self, o)
         o.position = tuple(self.position)
@@ -832,11 +860,12 @@ class Sprite(Scriptable, Actor):
         o.size = self.size
         o.is_draggable = self.is_draggable
         o.is_visible = self.is_visible
+
         return o
 
     def __repr__(self):
         return "<%s.%s(%r)>" % (self.__class__.__module__,
-                self.__class__.__name__, self.name)
+                                self.__class__.__name__, self.name)
 
 
 class Watcher(Actor):
@@ -848,7 +877,7 @@ class Watcher(Actor):
     """
 
     def __init__(self, target, block, style="normal", is_visible=True,
-            pos=None):
+                 pos=None):
         Actor.__init__(self)
 
         assert target is not None
@@ -912,18 +941,21 @@ class Watcher(Actor):
 
     def _normalize(self):
         assert self.style in ("normal", "large", "slider")
+
         if self.value:
             self.value.watcher = self
 
     def copy(self):
         """Return a new instance with the same attributes."""
+
         o = self.__class__(self.target,
-                self.block.copy(),
-                self.style,
-                self.is_visible,
-                self.pos)
+                           self.block.copy(),
+                           self.style,
+                           self.is_visible,
+                           self.pos)
         o.slider_min = self.slider_min
         o.slider_max = self.slider_max
+
         return o
 
     @property
@@ -935,6 +967,7 @@ class Watcher(Actor):
         ``block`` watchers watch the value of a reporter block.
 
         """
+
         if self.block.type.has_command('readVariable'):
             return 'variable'
         elif self.block.type.has_command('contentsOfList:'):
@@ -949,6 +982,7 @@ class Watcher(Actor):
         Returns ``None`` if it's a block watcher.
 
         """
+
         if self.kind == 'variable':
             return self.target.variables[self.block.args[0]]
         elif self.kind == 'list':
@@ -956,7 +990,7 @@ class Watcher(Actor):
 
     def __repr__(self):
         r = "%s.%s(%r, %r" % (self.__class__.__module__,
-                self.__class__.__name__, self.target, self.block)
+                              self.__class__.__name__, self.target, self.block)
         if self.style != "normal":
             r += ", style=%r" % self.style
         if not self.is_visible:
@@ -964,8 +998,8 @@ class Watcher(Actor):
         if self.pos:
             r += ", pos=%s" % repr(self.pos)
         r += ")"
-        return r
 
+        return r
 
 
 #-- Variables --#
@@ -1001,14 +1035,16 @@ class Variable(object):
 
     def copy(self):
         """Return a new instance with the same attributes."""
+
         return self.__class__(self.value, self.is_cloud)
 
     def __repr__(self):
         r = "%s.%s(%r" % (self.__class__.__module__, self.__class__.__name__,
-                self.value)
+                          self.value)
         if self.is_cloud:
             r += ", is_cloud=%r" % self.is_cloud
         r += ")"
+
         return r
 
 
@@ -1021,6 +1057,7 @@ class List(object):
     list values, and this class is not used.
 
     """
+
     def __init__(self, items=None, is_cloud=False):
         self.items = list(items) if items else []
         """The items contained in the list. A Python list of unicode
@@ -1049,12 +1086,12 @@ class List(object):
 
     def __repr__(self):
         r = "<%s.%s(%i items)>" % (self.__class__.__module__,
-                self.__class__.__name__, len(self.items))
+                                   self.__class__.__name__, len(self.items))
         if self.is_cloud:
             r += ", is_cloud=%r" % self.is_cloud
         r += ")"
-        return r
 
+        return r
 
 
 #-- Color --#
@@ -1101,6 +1138,7 @@ class Color(object):
     @property
     def value(self):
         """Return ``(r, g, b)`` tuple."""
+
         return (self.r, self.g, self.b)
 
     @value.setter
@@ -1118,7 +1156,7 @@ class Color(object):
 
     def __repr__(self):
         return "%s.%s(%s)" % (self.__class__.__module__,
-                self.__class__.__name__, repr(self.value).strip("()"))
+                              self.__class__.__name__, repr(self.value).strip("()"))
 
     def stringify(self):
         """Returns the color value in hexcode format.
@@ -1126,18 +1164,21 @@ class Color(object):
         eg. ``'#ff1056'``
 
         """
+
         hexcode = "#"
         for x in self.value:
             part = hex(x)[2:]
-            if len(part) < 2: part = "0" + part
+            if len(part) < 2:
+                part = "0" + part
             hexcode += part
+
         return hexcode
 
     @classmethod
     def random(cls):
         f = lambda: random.randint(0, 255)
-        return cls(f(), f(), f())
 
+        return cls(f(), f(), f())
 
 
 #-- BlockTypes --#
@@ -1150,7 +1191,7 @@ class Insert(object):
         'number-menu': 0,
         'stack': [],
         'color': Color('#f00'),
-        'inline': 'nil', # Can't be empty
+        'inline': 'nil',  # Can't be empty
     }
 
     SHAPE_FMTS = {
@@ -1167,39 +1208,39 @@ class Insert(object):
 
     KIND_OPTIONS = {
         'attribute': ['x position', 'y position', 'direction', 'costume #',
-            'size', 'volume'],
+                      'size', 'volume'],
         'backdrop': [],
         'booleanSensor': ['button pressed', 'A connected', 'B connected',
-            'C connected', 'D connected'],
+                          'C connected', 'D connected'],
         'broadcast': [],
         'costume': [],
         'direction': [],
         'drum': range(1, 18),
         'effect': ['color', 'fisheye', 'whirl', 'pixelate', 'mosaic',
-            'brightness', 'ghost'],
+                   'brightness', 'ghost'],
         'instrument': range(1, 21),
         'key': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
-            'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-            'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'space',
-            'left arrow', 'right arrow', 'up arrow', 'down arrow'],
+                'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+                'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'space',
+                'left arrow', 'right arrow', 'up arrow', 'down arrow'],
         'list': [],
         'listDeleteItem': ['last', 'all'],
         'listItem': ['last', 'random'],
         'mathOp': ['abs', 'floor', 'ceiling', 'sqrt', 'sin', 'cos', 'tan',
-            'asin', 'acos', 'atan', 'ln', 'log', 'e ^', '10 ^'],
+                   'asin', 'acos', 'atan', 'ln', 'log', 'e ^', '10 ^'],
         'motorDirection': ['this way', 'that way', 'reverse'],
         'note': [],
         'rotationStyle': ['left-right', "don't rotate", 'all around'],
         'sensor': ['slider', 'light', 'sound', 'resistance-A', 'resistance-B',
-            'resistance-C', 'resistance-D'],
+                   'resistance-C', 'resistance-D'],
         'sound': [],
         'spriteOnly': ['myself'],
         'spriteOrMouse': ['mouse-pointer'],
         'spriteOrStage': ['Stage'],
-        'stageOrThis': ['Stage'], # ? TODO
+        'stageOrThis': ['Stage'],  # ? TODO
         'stop': ['all', 'this script', 'other scripts in sprite'],
         'timeAndDate': ['year', 'month', 'date', 'day of week', 'hour',
-            'minute', 'second'],
+                        'minute', 'second'],
         'touching': ['mouse-pointer', 'edge'],
         'triggerSensor': ['loudness', 'timer', 'video motion'],
         'var': [],
@@ -1208,7 +1249,7 @@ class Insert(object):
     }
 
     def __init__(self, shape, kind=None, default=None, name=None,
-            unevaluated=None):
+                 unevaluated=None):
         self.shape = shape
         """What kind of values this argument accepts.
 
@@ -1316,16 +1357,21 @@ class Insert(object):
 
     def __repr__(self):
         r = "%s.%s(%r" % (self.__class__.__module__,
-                self.__class__.__name__, self.shape)
+                          self.__class__.__name__, self.shape)
+
         if self.kind != None:
             r += ", %r" % self.kind
+
         if self.default != Insert.SHAPE_DEFAULTS.get(self.shape, None):
             r += ", default=%r" % self.default
+
         if self.unevaluated:
             r += ", unevaluated=%r" % self.unevaluated
+
         if self.name:
             r += ", name=%r" % self.name
         r += ")"
+
         return r
 
     def __eq__(self, other):
@@ -1346,15 +1392,18 @@ class Insert(object):
     def stringify(self, value=None, block_plugin=False):
         if value is None or (value is False and self.shape == "boolean"):
             value = self.default
+
             if value is None:
                 value = ""
-        if isinstance(value, Block): # use block's shape
+
+        if isinstance(value, Block):  # use block's shape
             return value.stringify(block_plugin, in_insert=True)
         else:
             if hasattr(value, "stringify"):
                 value = value.stringify()
             elif isinstance(value, list):
-                value = "\n".join(block.stringify(block_plugin) for block in value)
+                value = "\n".join(block.stringify(block_plugin)
+                                  for block in value)
 
             if self.shape == 'stack':
                 value = value.replace("\n", "\n    ")
@@ -1363,10 +1412,12 @@ class Insert(object):
                 value = Insert.SHAPE_FMTS.get(self.shape, '%s') % (value,)
             elif self.shape == 'string' or self.kind == 'broadcast':
                 value = unicode(value)
+
                 if "'" in value:
                     value = '"%s"' % value.replace('"', '\\"')
                 else:
                     value = "'%s'" % value.replace("'", "\\'")
+
             return value
 
     def options(self, scriptable=None):
@@ -1376,6 +1427,7 @@ class Insert(object):
         Mostly complete, excepting 'attribute'.
 
         """
+
         options = list(Insert.KIND_OPTIONS.get(self.kind, []))
         if scriptable:
             if self.kind == 'var':
@@ -1392,12 +1444,13 @@ class Insert(object):
                 options += [c.name for c in scriptable.sounds]
                 options += [c.name for c in scriptable.project.stage.sounds]
             elif self.kind in ('spriteOnly', 'spriteOrMouse', 'spriteOrStage',
-                    'touching'):
+                               'touching'):
                 options += [s.name for s in scriptable.project.sprites]
             elif self.kind == 'attribute':
-                pass # TODO
+                pass  # TODO
             elif self.kind == 'broadcast':
                 options += list(set(scriptable.project.get_broadcasts()))
+
         return options
 
 
@@ -1460,8 +1513,10 @@ class BaseBlockType(object):
         eg. ``'say %s for %s secs'``
 
         """
+
         parts = [("%s" if isinstance(p, Insert) else p) for p in self.parts]
-        parts = [("%%" if p == "%" else p) for p in parts] # escape percent
+        parts = [("%%" if p == "%" else p) for p in parts]  # escape percent
+
         return "".join(parts)
 
     @property
@@ -1471,11 +1526,13 @@ class BaseBlockType(object):
         List of :class:`Insert` instances.
 
         """
+
         return [p for p in self.parts if isinstance(p, Insert)]
 
     @property
     def defaults(self):
         """Default values for block inserts. (See :attr:`Block.args`.)"""
+
         return [i.default for i in self.inserts]
 
     @property
@@ -1485,28 +1542,34 @@ class BaseBlockType(object):
         Used by :class:`BlockType.get` to look up blocks.
 
         """
+
         return BaseBlockType._strip_text(
-                self.text % tuple((i.default if i.shape == 'inline' else '%s')
-                                  for i in self.inserts))
+            self.text % tuple((i.default if i.shape == 'inline' else '%s')
+                              for i in self.inserts))
 
     @staticmethod
     def _strip_text(text):
         """Returns text with spaces and inserts removed."""
+
         text = re.sub(r'[ ,?:]|%s', "", text.lower())
+
         for chr in "-%":
             new_text = text.replace(chr, "")
             if new_text:
                 text = new_text
+
         return text.lower()
 
     def __repr__(self):
         return "<%s.%s(%r shape=%r)>" % (self.__class__.__module__,
-                self.__class__.__name__,
-                self.text % tuple(i.stringify(None) for i in self.inserts),
-                self.shape)
+                                         self.__class__.__name__,
+                                         self.text % tuple(
+                                             i.stringify(None) for i in self.inserts),
+                                         self.shape)
 
     def stringify(self, args=None, block_plugin=False, in_insert=False):
-        if args is None: args = self.defaults
+        if args is None:
+            args = self.defaults
         args = list(args)
 
         r = self.text % tuple(i.stringify(args.pop(0), block_plugin)
@@ -1516,8 +1579,10 @@ class BaseBlockType(object):
                 return r + "end"
 
         fmt = BaseBlockType.SHAPE_FMTS.get(self.shape, "%s")
+
         if not block_plugin:
             fmt = "%s" if fmt == "%s" else "(%s)"
+
         if in_insert and fmt == "%s":
             fmt = "{%s}"
 
@@ -1525,9 +1590,11 @@ class BaseBlockType(object):
 
     def has_insert(self, shape):
         """Returns True if any of the inserts have the given shape."""
+
         for insert in self.inserts:
             if insert.shape == shape:
                 return True
+
         return False
 
 
@@ -1542,8 +1609,10 @@ class BlockType(BaseBlockType):
 
     def __getstate__(self):
         """lambda functions are not pickleable so drop them."""
+
         copy = self.__dict__.copy()
         copy['_workaround'] = None
+
         return copy
 
     def __init__(self, pbt):
@@ -1563,10 +1632,12 @@ class BlockType(BaseBlockType):
         """
         assert self.shape == pbt.shape
         assert len(self.inserts) == len(pbt.inserts)
+
         for (i, o) in zip(self.inserts, pbt.inserts):
             assert i.shape == o.shape
             assert i.kind == o.kind
             assert i.unevaluated == o.unevaluated
+
         if plugin not in self._plugins:
             self._plugins[plugin] = pbt
 
@@ -1576,14 +1647,17 @@ class BlockType(BaseBlockType):
         If plugin is ``None``, return the first registered plugin.
 
         """
+
         if plugin:
             plugin = kurt.plugin.Kurt.get_plugin(plugin)
+
             if plugin.name in self._plugins:
                 return self._plugins[plugin.name]
             else:
                 err = BlockNotSupported("%s doesn't have %r" %
-                        (plugin.display_name, self))
+                                        (plugin.display_name, self))
                 err.block_type = self
+
                 raise err
         else:
             return self.conversions[0]
@@ -1591,18 +1665,23 @@ class BlockType(BaseBlockType):
     @property
     def conversions(self):
         """Return the list of :class:`PluginBlockType` instances."""
+
         return self._plugins.values()
 
     def has_conversion(self, plugin):
         """Return True if the plugin supports this block."""
+
         plugin = kurt.plugin.Kurt.get_plugin(plugin)
+
         return plugin.name in self._plugins
 
     def has_command(self, command):
         """Returns True if any of the plugins have the given command."""
+
         for pbt in self._plugins.values():
             if pbt.command == command:
                 return True
+
         return False
 
     @property
@@ -1629,6 +1708,7 @@ class BlockType(BaseBlockType):
           corresponding BlockType.
 
         """
+
         if isinstance(block_type, (BlockType, CustomBlockType)):
             return block_type
 
@@ -1640,12 +1720,12 @@ class BlockType(BaseBlockType):
             return block
 
         blocks = kurt.plugin.Kurt.blocks_by_text(block_type)
-        for block in blocks: # check the blocks' commands map to unique blocks
+        for block in blocks:  # check the blocks' commands map to unique blocks
             if kurt.plugin.Kurt.block_by_command(
                     block.convert().command) != blocks[0]:
                 raise ValueError(
-                        "ambigious block text %r, use one of %r instead" %
-                        (block_type, [b.convert().command for b in blocks]))
+                    "ambigious block text %r, use one of %r instead" %
+                    (block_type, [b.convert().command for b in blocks]))
 
         if blocks:
             return blocks[0]
@@ -1658,6 +1738,7 @@ class BlockType(BaseBlockType):
                 for plugin in self._plugins:
                     if plugin in other._plugins:
                         return self._plugins[plugin] == other._plugins[plugin]
+
         return False
 
     def __ne__(self, other):
@@ -1724,10 +1805,11 @@ class PluginBlockType(BaseBlockType):
                         return True
         elif isinstance(other, PluginBlockType):
             for name in ("shape", "inserts", "command", "format", "category"):
-                 if getattr(self, name) != getattr(other, name):
+                if getattr(self, name) != getattr(other, name):
                     return False
             else:
                 return True
+
         return False
 
 
@@ -1752,7 +1834,6 @@ class CustomBlockType(BaseBlockType):
 
         self.is_atomic = False
         """True if the block should run without screen refresh."""
-
 
 
 #-- Scripts --#
@@ -1843,6 +1924,7 @@ class Block(object):
 
     def copy(self):
         """Return a new Block instance with the same attributes."""
+
         args = []
         for arg in self.args:
             if isinstance(arg, Block):
@@ -1850,23 +1932,22 @@ class Block(object):
             elif isinstance(arg, list):
                 arg = [b.copy() for b in arg]
             args.append(arg)
+
         return Block(self.type, *args)
 
     def __eq__(self, other):
-        return (
-            isinstance(other, Block) and
-            self.type == other.type and
-            self.args == other.args
-        )
+        return (isinstance(other, Block) and
+                self.type == other.type and
+                self.args == other.args)
 
     def __ne__(self, other):
         return not self == other
 
     def __repr__(self):
         string = "%s.%s(%s, " % (self.__class__.__module__,
-                self.__class__.__name__,
-                repr(self.type.convert().command if isinstance(self.type,
-                    BlockType) else self.type))
+                                 self.__class__.__name__,
+                                 repr(self.type.convert().command if isinstance(self.type,
+                                                                                BlockType) else self.type))
         for arg in self.args:
             if isinstance(arg, Block):
                 string = string.rstrip("\n")
@@ -1876,24 +1957,30 @@ class Block(object):
                     string += "    "
                 else:
                     string += " "
+
                 string += "[\n"
+
                 for block in arg:
                     string += "    "
                     string += repr(block).replace("\n", "\n    ")
                     string += ",\n"
+
                 string += "    ], "
             else:
                 string += repr(arg) + ", "
+
         string = string.rstrip(" ").rstrip(",")
+
         return string + ")"
 
     def stringify(self, block_plugin=False, in_insert=False):
         s = self.type.stringify(self.args, block_plugin, in_insert)
         if self.comment:
             i = s.index("\n") if "\n" in s else len(s)
-            indent = "\n"  +  " " * i  +  " // "
+            indent = "\n" + " " * i + " // "
             comment = " // " + self.comment.replace("\n", indent)
             s = s[:i] + comment + s[i:]
+
         return s
 
 
@@ -1923,31 +2010,35 @@ class Script(object):
     def _normalize(self):
         self.pos = self.pos
         self.blocks = list(self.blocks)
+
         for block in self.blocks:
             block._normalize()
 
     def copy(self):
         """Return a new instance with the same attributes."""
+
         return self.__class__([b.copy() for b in self.blocks],
-                tuple(self.pos) if self.pos else None)
+                              tuple(self.pos) if self.pos else None)
 
     def __eq__(self, other):
-        return (
-            isinstance(other, Script) and
-            self.blocks == other.blocks
-        )
+        return (isinstance(other, Script) and
+                self.blocks == other.blocks)
 
     def __ne__(self, other):
         return not self == other
 
     def __repr__(self):
         r = "%s.%s([\n" % (self.__class__.__module__,
-                self.__class__.__name__)
+                           self.__class__.__name__)
+
         for block in self.blocks:
             r += "    " + repr(block).replace("\n", "\n    ") + ",\n"
+
         r = r.rstrip().rstrip(",") + "]"
+
         if self.pos:
             r += ", pos=%r" % (self.pos,)
+
         return r + ")"
 
     def stringify(self, block_plugin=False):
@@ -1959,6 +2050,7 @@ class Script(object):
     def __getattr__(self, name):
         if name.startswith('__') and name.endswith('__'):
             return super(Script, self).__getattr__(name)
+
         return getattr(self.blocks, name)
 
     def __iter__(self):
@@ -1995,9 +2087,11 @@ class Comment(object):
 
     def __repr__(self):
         r = "%s.%s(%r" % (self.__class__.__module__,
-                self.__class__.__name__, self.text)
+                          self.__class__.__name__, self.text)
+
         if self.pos:
             r += ", pos=%r" % (self.pos,)
+
         return r + ")"
 
     def stringify(self):
@@ -2006,7 +2100,6 @@ class Comment(object):
     def _normalize(self):
         self.pos = self.pos
         self.text = unicode(self.text)
-
 
 
 #-- Costumes --#
@@ -2024,6 +2117,7 @@ class Costume(object):
 
         if not rotation_center:
             rotation_center = (int(image.width / 2), int(image.height / 2))
+
         self.rotation_center = tuple(rotation_center)
         """``(x, y)`` position from the top-left corner of the point about
         which the image rotates.
@@ -2037,6 +2131,7 @@ class Costume(object):
 
     def copy(self):
         """Return a new instance with the same attributes."""
+
         return Costume(self.name, self.image, self.rotation_center)
 
     @classmethod
@@ -2047,8 +2142,10 @@ class Costume(object):
         image filename.
 
         """
+
         (folder, filename) = os.path.split(path)
         (name, extension) = os.path.splitext(filename)
+
         return Costume(name, Image.load(path))
 
     def save(self, path):
@@ -2064,24 +2161,31 @@ class Costume(object):
 
         """
         (folder, filename) = os.path.split(path)
+
         if not filename:
             filename = _clean_filename(self.name)
             path = os.path.join(folder, filename)
+
         return self.image.save(path)
 
     def resize(self, size):
         """Resize :attr:`image` in-place."""
+
         self.image = self.image.resize(size)
 
     def __repr__(self):
         return "<%s.%s name=%r rotation_center=%d,%d at 0x%X>" % (
-            self.__class__.__module__, self.__class__.__name__, self.name,
-            self.rotation_center[0], self.rotation_center[1], id(self)
-        )
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.name,
+            self.rotation_center[0],
+            self.rotation_center[1],
+            id(self))
 
     def __getattr__(self, name):
         if name in ('width', 'height', 'size'):
             return getattr(self.image, name)
+
         return super(Costume, self).__getattr__(name)
 
 
@@ -2118,6 +2222,7 @@ class Image(object):
         self._contents = None
         self._format = None
         self._size = None
+
         if isinstance(contents, PIL.Image.Image):
             self._pil_image = contents
         else:
@@ -2132,10 +2237,12 @@ class Image(object):
                 'size': self._pil_image.size,
                 'mode': self._pil_image.mode}
             return copy
+
         return self.__dict__
 
     def __setstate__(self, data):
         self.__dict__.update(data)
+
         if self._pil_image:
             self._pil_image = PIL.Image.frombytes(**self._pil_image)
 
@@ -2144,15 +2251,18 @@ class Image(object):
     @property
     def pil_image(self):
         """A :class:`PIL.Image.Image` instance containing the image data."""
+
         if not self._pil_image:
             if self._format == "SVG":
                 raise VectorImageError("can't rasterise vector images")
             self._pil_image = PIL.Image.open(StringIO(self.contents))
+
         return self._pil_image
 
     @property
     def contents(self):
         """The raw file contents as a string."""
+
         if not self._contents:
             if self._path:
                 # Read file into memory so we don't run out of file descriptors
@@ -2164,6 +2274,7 @@ class Image(object):
                 f = StringIO()
                 self._pil_image.save(f, self.format)
                 self._contents = f.getvalue()
+
         return self._contents
 
     @property
@@ -2175,6 +2286,7 @@ class Image(object):
         ``"JPEG"`` and ``"PNG"``.
 
         """
+
         if self._format:
             return self._format
         elif self.pil_image:
@@ -2187,11 +2299,13 @@ class Image(object):
         eg ``".png"``
 
         """
+
         return Image.image_extension(self.format)
 
     @property
     def size(self):
         """``(width, height)`` in pixels."""
+
         if self._size and not self._pil_image:
             return self._size
         else:
@@ -2231,8 +2345,10 @@ class Image(object):
         last format.
 
         """
+
         for format in formats:
             format = Image.image_format(format)
+
             if self.format == format:
                 return self
         else:
@@ -2244,11 +2360,13 @@ class Image(object):
         Returns self if the format is already the same.
 
         """
+
         if self.format == format:
             return self
         else:
             image = Image(self.pil_image)
             image._format = format
+
             return image
 
     def save(self, path):
@@ -2260,6 +2378,7 @@ class Image(object):
         :returns: Path to the saved file.
 
         """
+
         (folder, filename) = os.path.split(path)
         (name, extension) = os.path.splitext(filename)
 
@@ -2286,10 +2405,12 @@ class Image(object):
     @classmethod
     def new(self, size, fill):
         """Return a new Image instance filled with a color."""
+
         return Image(PIL.Image.new("RGB", size, fill))
 
     def resize(self, size):
         """Return a new Image instance with the given size."""
+
         return Image(self.pil_image.resize(size, PIL.Image.ANTIALIAS))
 
     def paste(self, other):
@@ -2298,9 +2419,12 @@ class Image(object):
         This image will show through transparent areas of the given image.
 
         """
+
         r, g, b, alpha = other.pil_image.split()
+
         pil_image = self.pil_image.copy()
         pil_image.paste(other.pil_image, mask=alpha)
+
         return kurt.Image(pil_image)
 
     # Static methods
@@ -2309,18 +2433,21 @@ class Image(object):
     def image_format(format_or_extension):
         if format_or_extension:
             format = format_or_extension.lstrip(".").upper()
+
             if format == "JPG":
                 format = "JPEG"
+
             return format
 
     @staticmethod
     def image_extension(format_or_extension):
         if format_or_extension:
             extension = format_or_extension.lstrip(".").lower()
+
             if extension == "jpeg":
                 extension = "jpg"
-            return "." + extension
 
+            return "." + extension
 
 
 #-- Sounds --#
@@ -2341,6 +2468,7 @@ class Sound(object):
 
     def copy(self):
         """Return a new instance with the same attributes."""
+
         return Sound(self.name, self.waveform)
 
     @classmethod
@@ -2351,8 +2479,10 @@ class Sound(object):
         the sound filename.
 
         """
+
         (folder, filename) = os.path.split(path)
         (name, extension) = os.path.splitext(filename)
+
         return Sound(name, Waveform.load(path))
 
     def save(self, path):
@@ -2364,15 +2494,18 @@ class Sound(object):
         :returns: Path to the saved file.
 
         """
+
         (folder, filename) = os.path.split(path)
+
         if not filename:
             filename = _clean_filename(self.name)
             path = os.path.join(folder, filename)
+
         return self.waveform.save(path)
 
     def __repr__(self):
         return "<%s.%s name=%r at 0x%X>" % (self.__class__.__module__,
-                self.__class__.__name__, self.name, id(self))
+                                            self.__class__.__name__, self.name, id(self))
 
 
 class Waveform(object):
@@ -2410,11 +2543,13 @@ class Waveform(object):
                 f = open(self._path, "rb")
                 self._contents = f.read()
                 f.close()
+
         return self._contents
 
     @property
     def _wave(self):
         """Return a wave.Wave_read instance from the ``wave`` module."""
+
         try:
             return wave.open(StringIO(self.contents))
         except wave.Error, err:
@@ -2425,6 +2560,7 @@ class Waveform(object):
     @property
     def rate(self):
         """The sampling rate of the sound."""
+
         if self._rate:
             return self._rate
         else:
@@ -2433,17 +2569,18 @@ class Waveform(object):
     @property
     def sample_count(self):
         """The number of samples in the sound."""
+
         if self._sample_count:
             return self._sample_count
         else:
             return self._wave.getnframes()
-
 
     # Methods
 
     @classmethod
     def load(cls, path):
         """Load Waveform from file."""
+
         assert os.path.exists(path), "No such file: %r" % path
 
         (folder, filename) = os.path.split(path)
@@ -2451,6 +2588,7 @@ class Waveform(object):
 
         wave = Waveform(None)
         wave._path = path
+
         return wave
 
     def save(self, path):
@@ -2459,6 +2597,7 @@ class Waveform(object):
         :returns: Path to the saved file.
 
         """
+
         (folder, filename) = os.path.split(path)
         (name, extension) = os.path.splitext(filename)
 
@@ -2471,7 +2610,6 @@ class Waveform(object):
         f.close()
 
         return path
-
 
 
 #-- Import submodules --#

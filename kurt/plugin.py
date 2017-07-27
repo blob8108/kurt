@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2012 Tim Radvan
 #
 # This file is part of Kurt.
@@ -67,7 +70,6 @@ from collections import OrderedDict
 import kurt
 
 
-
 class KurtPlugin(object):
     """Handles a specific file format.
 
@@ -123,6 +125,7 @@ class KurtPlugin(object):
         :returns: :class:`Project`
 
         """
+
         raise NotImplementedError
 
     def save(self, fp, project):
@@ -132,6 +135,7 @@ class KurtPlugin(object):
         :param project: a :class:`Project`
 
         """
+
         raise NotImplementedError
 
 
@@ -250,11 +254,11 @@ class Kurt(object):
         return matches
 
 
-
 #-- Features --#
 
 def empty_generator():
-    if False: yield
+    if False:
+        yield
 
 
 class Feature(object):
@@ -266,11 +270,13 @@ class Feature(object):
     def get(cls, name):
         if isinstance(name, Feature):
             return name
+
         return cls.FEATURES[name]
 
     def __init__(self, name, description):
         self.name = name
         self.description = description
+
         Feature.FEATURES[name] = self
 
     def __repr__(self):
@@ -279,41 +285,53 @@ class Feature(object):
     def __eq__(self, other):
         if isinstance(other, basestring):
             return self.name == other
+
         return self is other
 
     def normalize(self, project):
         """Convert project to a plugin that SUPPORTS this feature."""
+
         return empty_generator()
 
     def workaround(self, project):
         """Convert project to a plugin that does NOT support this feature."""
+
         return empty_generator()
 
 
 def workaround(feature):
     feature = Feature.get(feature)
+
     def _wrapper(f):
         assert callable(f)
+
         feature.workaround = f
+
     return _wrapper
+
 
 def normalize(feature):
     feature = Feature.get(feature)
+
     def _wrapper(f):
         assert callable(f)
-        feature.normalize = f
-    return _wrapper
 
+        feature.normalize = f
+
+    return _wrapper
 
 
 Feature("Vector Images",
         """Allow vector format (SVG) image files for costumes.""")
 
+
 @workaround("Vector Images")
 def _workaround_no_vector_images(project):
     """Replace vector images with fake ones."""
+
     RED = (255, 0, 0)
     PLACEHOLDER = kurt.Image.new((32, 32), RED)
+
     for scriptable in [project.stage] + project.sprites:
         for costume in scriptable.costumes:
             if costume.image.format == "SVG":
@@ -324,13 +342,17 @@ Feature("Stage-specific Variables",
         """Can have stage-specific variables and lists, in addition to global
         variables and lists (which are stored on the :class:`Project`).""")
 
+
 @workaround("Stage-specific Variables")
 def _workaround_no_stage_specific_variables(project):
     """Make Stage-specific variables global (move them to Project)."""
+
     for (name, var) in project.stage.variables.items():
         yield "variable %s" % name
+
     for (name, _list) in project.stage.lists.items():
         yield "list %s" % name
+
     project.variables.update(project.stage.variables)
     project.lists.update(project.stage.lists)
     project.stage.variables = {}
@@ -344,16 +366,19 @@ Feature("First-class Lists",
         """Variables can take list values. Nested lists are supported.
         `Scriptable.lists` and `Project.lists` are unused.""")
 
+
 @workaround("First-class Lists")
 def _workaround_no_first_class_lists(project):
     """Replace list-containing variables with lists of the same name."""
-    return empty_generator() # TODO
+
+    return empty_generator()  # TODO
+
 
 @normalize("First-class Lists")
 def _normalize_first_class_lists(project):
     """Replace `Scriptable.lists` with variables containing lists."""
-    return empty_generator() # TODO
 
+    return empty_generator()  # TODO
 
 
 #-- Convert Blocks --#
@@ -364,5 +389,6 @@ def block_workaround(bt, workaround):
         workaround = lambda block: w.copy()
     else:
         assert callable(workaround)
+
     bt = kurt.BlockType.get(bt)
     bt._add_workaround(workaround)
