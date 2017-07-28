@@ -147,7 +147,7 @@ def make_block_types():
         ['define %Z', 'h', 10, 'procDef'],
         ['%Z', ' ', 10, 'call'],
     ]
-
+    
     # Blockify
     return map(blockify, commands)
 
