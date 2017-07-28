@@ -264,9 +264,9 @@ commands = [
 # extension:Array
 extras = [
     # add extensions code if not auto-generated
-    ["", "stop robot", "stop"],
-    ["", "move robot %m.direction", "move", "forward"],
-    ["", "move robot %m.direction speed %n", "move/speed", "forward", 1],
-    ["", "turn robot %m.turnDirection", "turn", "left"],
-    ["", "turn robot %m.turnDirection speed %n", "turn/speed", "left", 1]
+    [' ', 'stop robot', 'stop'],
+    [' ', 'move robot %m.direction', 'move', 'forward'],
+    [' ', 'move robot %m.direction speed %n', 'move/speed', 'forward', 1],
+    [' ', 'turn robot %m.turnDirection', 'turn', 'left'],
+    [' ', 'turn robot %m.turnDirection speed %n', 'turn/speed', 'left', 1]
 ]
