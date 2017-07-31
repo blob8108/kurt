@@ -626,5 +626,5 @@ class Scratch20Plugin(KurtPlugin):
 
         return zw.json
 
-
+# register the current plugin
 Kurt.register(Scratch20Plugin())
