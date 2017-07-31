@@ -161,6 +161,7 @@ class Kurt(object):
         * :attr:`Project.convert` is called with the format as a parameter
 
         """
+
         cls.plugins[plugin.name] = plugin
 
         # make features
@@ -207,6 +208,7 @@ class Kurt(object):
         :returns: :class:`KurtPlugin`
 
         """
+
         if isinstance(name, KurtPlugin):
             return name
 
@@ -233,6 +235,7 @@ class Kurt(object):
         Returns None if the block is not found.
 
         """
+
         for block in cls.blocks:
             if block.has_command(command):
                 return block
@@ -244,6 +247,7 @@ class Kurt(object):
         Capitalisation and spaces are ignored.
 
         """
+
         text = kurt.BlockType._strip_text(text)
         matches = []
         for block in cls.blocks:
