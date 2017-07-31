@@ -1715,7 +1715,11 @@ class BlockType(BaseBlockType):
         if isinstance(block_type, PluginBlockType):
             block_type = block_type.command
 
+        # remove odd characters
+        block_type = block_type.replace("\x1f", "/")
+
         block = kurt.plugin.Kurt.block_by_command(block_type)
+
         if block:
             return block
 
