@@ -270,5 +270,6 @@ extras = [
         'Scratch2Robot/move/speed', 'forward', 1],
     [' ', 'turn robot %m.turnDirection', 'Scratch2Robot/turn', 'left'],
     [' ', 'turn robot %m.turnDirection speed %n',
-        'Scratch2Robot/turn/speed', 'left', 1]
+        'Scratch2Robot/turn/speed', 'left', 1],
+    ['r', 'frontal laser distance', 'Scratch2Robot/laser/frontal']
 ]
