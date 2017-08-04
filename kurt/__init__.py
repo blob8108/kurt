@@ -259,10 +259,13 @@ class Project(object):
         if path_was_string:
             (folder, filename) = os.path.split(path)
             (name, extension) = os.path.splitext(filename)
+
             if format is None:
                 plugin = kurt.plugin.Kurt.get_plugin(extension=extension)
+
                 if not plugin:
                     raise UnknownFormat(extension)
+
             fp = open(path, "rb")
         else:
             fp = path
@@ -280,6 +283,7 @@ class Project(object):
 
         if isinstance(path, basestring):
             project.path = path
+
             if not project.name:
                 project.name = name
 
@@ -1979,6 +1983,7 @@ class Block(object):
 
     def stringify(self, block_plugin=False, in_insert=False):
         s = self.type.stringify(self.args, block_plugin, in_insert)
+
         if self.comment:
             i = s.index("\n") if "\n" in s else len(s)
             indent = "\n" + " " * i + " // "
