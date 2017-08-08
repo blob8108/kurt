@@ -21,7 +21,8 @@
 import re
 
 import kurt
-from kurt.scratch20.commands_src import commands, extras
+from kurt.scratch20.commands_src import commands
+from kurt.scratch20.commands_src_extras import commands_extra, extras
 
 
 CATEGORY_IDS = {
@@ -131,7 +132,10 @@ def blockify(blockspec):
 def make_block_types():
     global commands
 
-    # Add extras
+    # add extra general commands
+    commands += commands_extra
+
+    # add extras
     for block in extras:
         if len(block) > 1:
             (flag, spec, command) = block[:3]
@@ -139,7 +143,7 @@ def make_block_types():
         else:
             commands.append(block)
 
-    # Add not-actually-blocks
+    # add not-actually-blocks
     commands += [
         ['%x.var', 'r', 9, 'readVariable', 'var'],
         ['%x.list', 'r', 12, "contentsOfList:", 'list'],
@@ -147,8 +151,8 @@ def make_block_types():
         ['define %Z', 'h', 10, 'procDef'],
         ['%Z', ' ', 10, 'call'],
     ]
-    
-    # Blockify
+
+    # blockify
     return map(blockify, commands)
 
 
