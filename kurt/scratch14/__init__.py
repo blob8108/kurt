@@ -38,7 +38,6 @@ from kurt.scratch14.user_objects import make_user_objects, user_objects_by_name
 # counterparts.  Array and Dictionary are converted to list and dict.
 
 
-
 #-- Hack Container repr to be pretty --#
 
 @recursion_lock("<...>")
@@ -49,7 +48,6 @@ def container_repr(self):
         r += "    %r: %s,\n" % (k, repr(v).replace("\n", "\n    "))
     return "%s(%s)" % (self.__class__.__name__, r)
 Container.__repr__ = container_repr
-
 
 
 #-- Utils --#
@@ -70,14 +68,14 @@ def get_blocks_by_id(this_block):
                     for b in get_blocks_by_id(block):
                         yield b
 
+
 def swap_byte_pairs(data):
     swapped_bytes = ""
     for i in range(0, len(data), 2):
-        a = data[i:i+1]
-        b = data[i+1:i+2]
+        a = data[i:i + 1]
+        b = data[i + 1:i + 2]
         swapped_bytes += b + a
     return swapped_bytes
-
 
 
 #-- Main class --#
@@ -112,11 +110,12 @@ class Serializer(object):
         thumbnail = self.info['thumbnail']
         if thumbnail and isinstance(thumbnail, Form):
             thumbnail = self.UserObject('ImageMedia',
-                name = 'thumbnail',
-                form = thumbnail,
-            )
+                                        name='thumbnail',
+                                        form=thumbnail,
+                                        )
         thumbnail_costume = self.load_image(thumbnail)
-        if thumbnail_costume: self.project.thumbnail = thumbnail_costume.image
+        if thumbnail_costume:
+            self.project.thumbnail = thumbnail_costume.image
 
         # stage
         self.load_scriptable(self.project.stage, self.stage)
@@ -140,7 +139,7 @@ class Serializer(object):
 
         # TODO: stacking order of actors.
 
-        self.project._original = (self.info, self.stage) # DEBUG
+        self.project._original = (self.info, self.stage)  # DEBUG
 
         return self.project
 
@@ -151,8 +150,8 @@ class Serializer(object):
 
         # project info
         thumbnail = self.save_image(kurt.Costume("thumbnail", (
-                self.project.thumbnail or kurt.Image.new((160, 120), (1, 1, 1))
-            ))).form
+            self.project.thumbnail or kurt.Image.new((160, 120), (1, 1, 1))
+        ))).form
 
         self.info = {
             'author': self.project.author,
@@ -201,8 +200,8 @@ class Serializer(object):
                     self.save_watcher(kurt_actor))
 
         v14_project = Container(
-            info = encode_obj_table(self.info, self.plugin),
-            stage = encode_obj_table(self.stage, self.plugin),
+            info=encode_obj_table(self.info, self.plugin),
+            stage=encode_obj_table(self.stage, self.plugin),
         )
         scratch_file.build_stream(v14_project, fp)
 
@@ -243,9 +242,10 @@ class Serializer(object):
 
             if image.format == "JPEG":
                 v14_image = self.UserObject("ImageMedia",
-                    name = unicode(kurt_costume.name),
-                    jpegBytes = ByteArray(kurt_costume.image.contents),
-                )
+                                            name=unicode(kurt_costume.name),
+                                            jpegBytes=ByteArray(
+                                                kurt_costume.image.contents),
+                                            )
             else:
                 pil_image = kurt_costume.image.pil_image
                 pil_image = pil_image.convert("RGBA")
@@ -253,9 +253,10 @@ class Serializer(object):
                 rgba_string = pil_image.tobytes()
 
                 v14_image = self.UserObject("ImageMedia",
-                    name = unicode(kurt_costume.name),
-                    form = Form.from_string(width, height, rgba_string),
-                )
+                                            name=unicode(kurt_costume.name),
+                                            form=Form.from_string(
+                                                width, height, rgba_string),
+                                            )
 
             v14_image.size = kurt_costume.image.size
             v14_image.rotationCenter = Point(kurt_costume.rotation_center)
@@ -267,7 +268,7 @@ class Serializer(object):
         f.setnframes(v14_sound.originalSound.samplesSize)
         f.setframerate(v14_sound.originalSound.originalSamplingRate)
         f.setnchannels(1)
-        f.setsampwidth(2) # bytes?
+        f.setsampwidth(2)  # bytes?
         f.writeframes(swap_byte_pairs(v14_sound.originalSound.samples.value))
         f.close()
         return kurt.Sound(v14_sound.name, kurt.Waveform(contents.getvalue()))
@@ -376,10 +377,10 @@ class Serializer(object):
                 arg = Color.from_8bit(arg)
             elif insert:
                 if insert.kind in ('mathOp', 'effect', 'key'):
-                    arg = str(arg) # Won't accept unicode
+                    arg = str(arg)  # Won't accept unicode
 
                 elif insert.kind in ('spriteOrMouse', 'spriteOrStage',
-                        'touching'):
+                                     'touching'):
                     if arg == 'mouse-pointer':
                         arg = Symbol('mouse')
                     elif arg == 'edge':
@@ -427,7 +428,7 @@ class Serializer(object):
             kurt_target.lists[v14_list.name] = kurt_list
 
             kurt_watcher = kurt.Watcher(kurt_target,
-                    kurt.Block("contentsOfList:", v14_list.name))
+                                        kurt.Block("contentsOfList:", v14_list.name))
             kurt_watcher.is_visible = bool(v14_list.owner)
 
             (x, y, w, h) = v14_list.bounds.value
@@ -441,9 +442,10 @@ class Serializer(object):
         for (name, kurt_list) in kurt_target.lists.items():
             name = unicode(name)
             v14_list = self.UserObject("ScratchListMorph",
-                name = name,
-                list_items = map(unicode, kurt_list.items),
-            )
+                                       name=name,
+                                       list_items=map(
+                                           unicode, kurt_list.items),
+                                       )
 
             pos = kurt_list.watcher.pos
             if pos:
@@ -455,7 +457,7 @@ class Serializer(object):
             if not kurt_list.watcher.is_visible:
                 x += 534
                 y += 71
-            v14_list.bounds = Rectangle([x, y, x+95, y+115])
+            v14_list.bounds = Rectangle([x, y, x + 95, y + 115])
 
             v14_list.target = v14_morph
             if kurt_list.watcher.is_visible:
@@ -496,11 +498,13 @@ class Serializer(object):
     def save_watcher(self, kurt_watcher):
         v14_watcher = self.UserObject("WatcherMorph")
         readout = v14_watcher.readout = self.UserObject("UpdatingStringMorph",
-            font_with_size = [Symbol('VerdanaBold'), 10],
-        )
+                                                        font_with_size=[
+                                                            Symbol('VerdanaBold'), 10],
+                                                        )
         v14_watcher.readoutFrame = self.UserObject("WatcherReadoutFrameMorph",
-            submorphs = [v14_watcher.readout]
-        )
+                                                   submorphs=[
+                                                       v14_watcher.readout]
+                                                   )
 
         if kurt_watcher.pos:
             (x, y) = kurt_watcher.pos
@@ -535,7 +539,7 @@ class Serializer(object):
         v14_watcher.sliderMin = kurt_watcher.slider_min
         v14_watcher.sliderMax = kurt_watcher.slider_max
 
-        v14_watcher.bounds = Rectangle([x, y, x+1, x+1])
+        v14_watcher.bounds = Rectangle([x, y, x + 1, x + 1])
 
         return v14_watcher
 
@@ -644,7 +648,7 @@ class Serializer(object):
 
         images = map(self.save_image, kurt_scriptable.costumes)
         v14_scriptable.media = OrderedCollection(
-                images + map(self.save_sound, kurt_scriptable.sounds))
+            images + map(self.save_sound, kurt_scriptable.sounds))
 
         v14_scriptable.costume = images[kurt_scriptable.costume_index]
 
@@ -657,7 +661,7 @@ class Serializer(object):
             v14_scriptable.name = kurt_scriptable.name
             v14_scriptable.rotationDegrees = kurt_scriptable.direction - 90
             v14_scriptable.rotationStyle = Symbol(
-                    kurt_scriptable.rotation_style)
+                kurt_scriptable.rotation_style)
             v14_scriptable.draggable = kurt_scriptable.is_draggable
             v14_scriptable.flags = 0 if kurt_scriptable.is_visible else 1
 
@@ -667,7 +671,7 @@ class Serializer(object):
             x = x + 240 - rx
             y = 180 - y - ry
             (w, h) = kurt_scriptable.costume.image.size
-            v14_scriptable.bounds = Rectangle([x, y, x+w, y+h])
+            v14_scriptable.bounds = Rectangle([x, y, x + w, y + h])
 
 
 class Scratch14Plugin(KurtPlugin):
@@ -690,14 +694,13 @@ class Scratch14Plugin(KurtPlugin):
 Kurt.register(Scratch14Plugin())
 
 
-
 #-- Block workarounds --#
 
 # 1.4 -> 2.0
 block_workaround('stop script', kurt.Block('stop', 'this script'))
 block_workaround('stop all', kurt.Block('stop', 'all'))
 block_workaround('forever if',
-    lambda block: kurt.Block('forever', [kurt.Block('if', *block.args)]))
+                 lambda block: kurt.Block('forever', [kurt.Block('if', *block.args)]))
 block_workaround('loud?', kurt.Block('>', kurt.Block('loudness'), 30))
 
 # 2.0 -> 1.4
@@ -705,4 +708,3 @@ block_workaround('stop', lambda block: {
     'this script': kurt.Block('stop script'),
     'all': kurt.Block('stop all'),
 }.get(block.args[0], None))
-

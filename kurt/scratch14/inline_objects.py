@@ -22,7 +22,6 @@ from construct import Array as MetaRepeater
 # We can't import the name Array, as we use it. -_-
 
 
-
 ### Inline fields & Refs ###
 
 class Ref(object):
@@ -34,6 +33,7 @@ class Ref(object):
     Found in UserObjects and certain FixedObjects.
 
     """
+
     def __init__(self, index):
         """Initialise a reference.
         @param index: the index in the object table that the reference points to
@@ -44,12 +44,12 @@ class Ref(object):
     def to_construct(self):
         #index1 = self.index % 65536
         #index2 = (self.index - index1) >> 16
-        #return Container(classID = 'Ref', _index1 = index1, _index2 = index2)
+        # return Container(classID = 'Ref', _index1 = index1, _index2 = index2)
         return Container(classID="Ref", index=self.index)
 
     @classmethod
     def from_construct(cls, obj):
-        index = obj.index #int(obj._index2 << 16) + obj._index1
+        index = obj.index  # int(obj._index2 << 16) + obj._index1
         return Ref(index)
 
     def __repr__(self):
@@ -66,6 +66,7 @@ class Ref(object):
 
 
 class RefAdapter(Adapter):
+
     def _encode(self, obj, context):
         assert isinstance(obj, Ref)
         return obj.to_construct()
@@ -75,6 +76,7 @@ class RefAdapter(Adapter):
 
 
 class LargeIntegerAdapter(Adapter):
+
     def __init__(self, sign, *args, **kwargs):
         self.sign = sign
         Adapter.__init__(self, *args, **kwargs)
@@ -97,6 +99,7 @@ class LargeIntegerAdapter(Adapter):
 
 
 class FieldAdapter(Adapter):
+
     def _encode(self, obj, context):
         assert not isinstance(obj, str)
 
@@ -130,7 +133,6 @@ class FieldAdapter(Adapter):
             return obj.value
 
 
-
 """Construct for simple inline field values and references.
 
 They are encoded inline and not stored as object table entries. They do not
@@ -138,35 +140,39 @@ contain references (though they may *be* references).
 
 """
 field = FieldAdapter(Struct("field",
-    Enum(UBInt8("classID"),
-        nil = 1,
-        true = 2,
-        false = 3,
-        SmallInteger = 4,
-        SmallInteger16 = 5,
-        LargePositiveInteger = 6,
-        LargeNegativeInteger = 7,
-        Float = 8,
-        Ref = 99,
-    ),
-    Switch("value", lambda ctx: ctx.classID, {
-        "nil": Value("", lambda ctx: None),
-        "true": Value("", lambda ctx: True),
-        "false": Value("", lambda ctx: False),
-        "SmallInteger": SBInt32(""),
-        "SmallInteger16": SBInt16(""),
-        "LargePositiveInteger": LargeIntegerAdapter('+', Struct("",
-            UBInt16("length"),
-            MetaRepeater(lambda ctx: ctx.length, UBInt8("data")),
-        )),
-        "LargeNegativeInteger": LargeIntegerAdapter('-', Struct("",
-            UBInt16("length"),
-            MetaRepeater(lambda ctx: ctx.length, UBInt8("data")),
-        )),
-        "Float": BFloat64(""),
-        "Ref": RefAdapter(BitStruct("",
-            BitField("index", 24),
-        )),
-    })
-))
-
+                            Enum(UBInt8("classID"),
+                                 nil=1,
+                                 true=2,
+                                 false=3,
+                                 SmallInteger=4,
+                                 SmallInteger16=5,
+                                 LargePositiveInteger=6,
+                                 LargeNegativeInteger=7,
+                                 Float=8,
+                                 Ref=99,
+                                 ),
+                            Switch("value", lambda ctx: ctx.classID, {
+                                "nil": Value("", lambda ctx: None),
+                                "true": Value("", lambda ctx: True),
+                                "false": Value("", lambda ctx: False),
+                                "SmallInteger": SBInt32(""),
+                                "SmallInteger16": SBInt16(""),
+                                "LargePositiveInteger": LargeIntegerAdapter('+', Struct("",
+                                                                                        UBInt16(
+                                                                                            "length"),
+                                                                                        MetaRepeater(
+                                                                                            lambda ctx: ctx.length, UBInt8("data")),
+                                                                                        )),
+                                "LargeNegativeInteger": LargeIntegerAdapter('-', Struct("",
+                                                                                        UBInt16(
+                                                                                            "length"),
+                                                                                        MetaRepeater(
+                                                                                            lambda ctx: ctx.length, UBInt8("data")),
+                                                                                        )),
+                                "Float": BFloat64(""),
+                                "Ref": RefAdapter(BitStruct("",
+                                                            BitField(
+                                                                "index", 24),
+                                                            )),
+                            })
+                            ))

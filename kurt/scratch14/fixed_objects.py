@@ -19,7 +19,7 @@
 
 import PIL
 
-from array import array # used by Form
+from array import array  # used by Form
 from copy import copy
 import itertools
 import operator
@@ -76,6 +76,7 @@ def default_colormap():
 class FixedObject(object):
     """A primitive fixed-format object - eg String, Dictionary.
     value property - contains the object's value."""
+
     def __init__(self, value):
         if isinstance(value, FixedObject):
             value = value.value
@@ -83,8 +84,8 @@ class FixedObject(object):
 
     def to_construct(self, context):
         return Container(
-            classID = self.__class__.__name__,
-            value = self.to_value(),
+            classID=self.__class__.__name__,
+            value=self.to_value(),
         )
 
     @classmethod
@@ -117,7 +118,9 @@ class FixedObject(object):
     __copy__ = copy
 
 
-class ContainsRefs: pass
+class ContainsRefs:
+    pass
+
 
 class FixedObjectWithRepeater(FixedObject):
     """Used internally to handle things like
@@ -126,8 +129,9 @@ class FixedObjectWithRepeater(FixedObject):
             MetaRepeater(lambda ctx: ctx.length, UBInt32("items")),
         )
     """
+
     def to_value(self):
-        return Container(items = self.value, length = len(self.value))
+        return Container(items=self.value, length=len(self.value))
 
     @classmethod
     def from_value(cls, obj):
@@ -136,6 +140,7 @@ class FixedObjectWithRepeater(FixedObject):
 
 
 class FixedObjectByteArray(FixedObject):
+
     def __repr__(self):
         name = self.__class__.__name__
         value = repr(self.value)
@@ -147,6 +152,7 @@ class FixedObjectByteArray(FixedObject):
 
 # Bytes
 
+
 class String(FixedObjectByteArray):
     classID = 9
     _construct = PascalString("value", length_field=UBInt32("length"))
@@ -155,6 +161,7 @@ class String(FixedObjectByteArray):
 class Symbol(FixedObjectByteArray):
     classID = 10
     _construct = PascalString("value", length_field=UBInt32("length"))
+
     def __repr__(self):
         return "Symbol(%r)" % self.value
 
@@ -170,9 +177,9 @@ class ByteArray(FixedObjectByteArray):
 class SoundBuffer(FixedObjectByteArray):
     classID = 12
     _construct = Struct("",
-        UBInt32("length"),
-        construct.String("items", lambda ctx: ctx.length * 2),
-    )
+                        UBInt32("length"),
+                        construct.String("items", lambda ctx: ctx.length * 2),
+                        )
 
     @classmethod
     def from_value(cls, obj):
@@ -181,8 +188,8 @@ class SoundBuffer(FixedObjectByteArray):
     def to_value(self):
         value = self.value
         length = (len(value) + 3) / 2
-        value += "\x00" *  (length * 2  -  len(value)) # padding
-        return Container(items = value, length = length)
+        value += "\x00" * (length * 2 - len(value))  # padding
+        return Container(items=value, length=length)
 
 
 # Bitmap 13 - found later in file
@@ -193,15 +200,14 @@ class UTF8(FixedObjectByteArray):
                               encoding="utf8")
 
 
-
-
 # Collections
 
 class Collection(FixedObjectWithRepeater, ContainsRefs):
     _construct = Struct("",
-        UBInt32("length"),
-        MetaRepeater(lambda ctx: ctx.length, Rename("items", field)),
-    )
+                        UBInt32("length"),
+                        MetaRepeater(
+                            lambda ctx: ctx.length, Rename("items", field)),
+                        )
 
     def __init__(self, value=None):
         if value == None:
@@ -232,15 +238,21 @@ class Collection(FixedObjectWithRepeater, ContainsRefs):
     def copy(self):
         return self.__class__(list(self.value.copy))
 
+
 class Array(Collection):
     classID = 20
+
+
 class OrderedCollection(Collection):
     classID = 21
+
+
 class Set(Collection):
     classID = 22
+
+
 class IdentitySet(Collection):
     classID = 23
-
 
 
 # Dictionary
@@ -248,15 +260,18 @@ class IdentitySet(Collection):
 class Dictionary(Collection):
     classID = 24
     _construct = Struct("dictionary",
-        UBInt32("length"),
-        MetaRepeater(lambda ctx: ctx.length, Struct("items",
-            Rename("key", field),
-            Rename("value", field),
-        )),
-    )
+                        UBInt32("length"),
+                        MetaRepeater(lambda ctx: ctx.length, Struct("items",
+                                                                    Rename(
+                                                                        "key", field),
+                                                                    Rename(
+                                                                        "value", field),
+                                                                    )),
+                        )
 
     def __init__(self, value=None):
-        if value == None: value = {}
+        if value == None:
+            value = {}
         Collection.__init__(self, value)
 
     def to_value(self):
@@ -277,9 +292,9 @@ class Dictionary(Collection):
     def copy(self):
         return self.__class__(self.value.copy())
 
+
 class IdentityDictionary(Dictionary):
     classID = 25
-
 
 
 # Color
@@ -292,18 +307,18 @@ class Color(FixedObject):
     """
     classID = 30
     _construct = BitStruct("value",
-        Padding(2),
-        Bits("r", 10),
-        Bits("g", 10),
-        Bits("b", 10),
-    )
+                           Padding(2),
+                           Bits("r", 10),
+                           Bits("g", 10),
+                           Bits("b", 10),
+                           )
 
     _construct_32_rgba = Struct("",
-        UBInt8("r"),
-        UBInt8("g"),
-        UBInt8("b"),
-        UBInt8("alpha"),
-    )
+                                UBInt8("r"),
+                                UBInt8("g"),
+                                UBInt8("b"),
+                                UBInt8("alpha"),
+                                )
 
     def __init__(self, value):
         self.value = value
@@ -353,19 +368,18 @@ class Color(FixedObject):
         return bytearray((255, r, g, b))
 
 
-
 class TranslucentColor(Color):
     classID = 31
     _construct = Struct("",
-        Embed(Color._construct),
-        UBInt8("alpha"), # I think.
-    )
+                        Embed(Color._construct),
+                        UBInt8("alpha"),  # I think.
+                        )
     _construct_32 = Struct("",
-        UBInt8("alpha"),
-        UBInt8("r"),
-        UBInt8("g"),
-        UBInt8("b"),
-    )
+                           UBInt8("alpha"),
+                           UBInt8("r"),
+                           UBInt8("g"),
+                           UBInt8("b"),
+                           )
 
     def __init__(self, value):
         self.value = value
@@ -395,20 +409,18 @@ class TranslucentColor(Color):
         return bytearray((a, r, g, b))
 
 
-
-
-
 # Dimensions
 
 class Point(FixedObject):
     classID = 32
     _construct = Struct("",
-        Rename("x", field),
-        Rename("y", field),
-    )
+                        Rename("x", field),
+                        Rename("y", field),
+                        )
 
     def __init__(self, x, y=None):
-        if y is None: (x, y) = x
+        if y is None:
+            (x, y) = x
         self.x = x
         self.y = y
 
@@ -423,11 +435,12 @@ class Point(FixedObject):
         return 'Point(%r, %r)' % self.value
 
     def to_value(self):
-        return Container(x = self.x, y = self.y)
+        return Container(x=self.x, y=self.y)
 
     @classmethod
     def from_value(cls, value):
         return cls(value.x, value.y)
+
 
 class Rectangle(FixedObject):
     classID = 33
@@ -439,8 +452,6 @@ class Rectangle(FixedObject):
         return cls(value)
 
 
-
-
 # Form/images
 
 def get_run_length(ctx):
@@ -449,13 +460,14 @@ def get_run_length(ctx):
     except AttributeError:
         return ctx._.run_length
 
+
 class Bitmap(FixedObjectByteArray):
     classID = 13
     _construct = Struct("",
-        UBInt32("length"),
-        construct.String("items", lambda ctx: ctx.length * 4),
-        # Identically named "String" class -_-
-    )
+                        UBInt32("length"),
+                        construct.String("items", lambda ctx: ctx.length * 4),
+                        # Identically named "String" class -_-
+                        )
 
     @classmethod
     def from_value(cls, obj):
@@ -464,58 +476,66 @@ class Bitmap(FixedObjectByteArray):
     def to_value(self):
         value = self.value
         length = (len(value) + 3) / 4
-        value += "\x00" *  (length * 4  -  len(value)) # padding
-        return Container(items = value, length = length)
+        value += "\x00" * (length * 4 - len(value))  # padding
+        return Container(items=value, length=length)
 
     _int = Struct("int",
-        UBInt8("_value"),
-        If(lambda ctx: ctx._value > 223,
-            IfThenElse("", lambda ctx: ctx._value <= 254, Embed(Struct("",
-                UBInt8("_second_byte"),
-                Value("_value",
-                    lambda ctx: (ctx._value - 224) * 256 + ctx._second_byte),
-            )), Embed(Struct("",
-                UBInt32("_value"),
-            )))
-        ),
-    )
+                  UBInt8("_value"),
+                  If(lambda ctx: ctx._value > 223,
+                     IfThenElse("", lambda ctx: ctx._value <= 254, Embed(Struct("",
+                                                                                UBInt8(
+                                                                                    "_second_byte"),
+                                                                                Value("_value",
+                                                                                      lambda ctx: (ctx._value - 224) * 256 + ctx._second_byte),
+                                                                                )), Embed(Struct("",
+                                                                                                 UBInt32(
+                                                                                                     "_value"),
+                                                                                                 )))
+                     ),
+                  )
 
     _length_run_coding = Struct("",
-        Embed(_int), #ERROR?
-        Value("length", lambda ctx: ctx._value),
+                                Embed(_int),  # ERROR?
+                                Value("length", lambda ctx: ctx._value),
 
-        OptionalGreedyRepeater(
-            Struct("data",
-                Embed(_int),
-                Value("data_code", lambda ctx: ctx._value % 4),
-                Value("run_length", lambda ctx:
-                    (ctx._value - ctx.data_code) / 4),
-                Switch("", lambda ctx: ctx.data_code, {
-                    0: Embed(Struct("",
-                        StrictRepeater(get_run_length,
-                            Value("pixels", lambda ctx: "\x00\x00\x00\x00")
-                        ),
-                    )),
-                    1: Embed(Struct("", Bytes("_b", 1),
-                        StrictRepeater(get_run_length,
-                            Value("pixels", lambda ctx: ctx._b * 4),
-                        ),
-                    )),
-                    2: Embed(Struct("",
-                        Bytes("_pixel", 4),
-                        StrictRepeater(get_run_length,
-                            Value("pixels", lambda ctx: ctx._pixel),
-                        ),
-                    )),
-                    3: Embed(Struct("",
-                        StrictRepeater(get_run_length,
-                            Bytes("pixels", 4),
-                        ),
-                    )),
-                }),
-            )
-        )
-    )
+                                OptionalGreedyRepeater(
+                                    Struct("data",
+                                           Embed(_int),
+                                           Value(
+                                               "data_code", lambda ctx: ctx._value % 4),
+                                           Value("run_length", lambda ctx:
+                                                 (ctx._value - ctx.data_code) / 4),
+                                           Switch("", lambda ctx: ctx.data_code, {
+                                               0: Embed(Struct("",
+                                                               StrictRepeater(get_run_length,
+                                                                              Value(
+                                                                                  "pixels", lambda ctx: "\x00\x00\x00\x00")
+                                                                              ),
+                                                               )),
+                                               1: Embed(Struct("", Bytes("_b", 1),
+                                                               StrictRepeater(get_run_length,
+                                                                              Value(
+                                                                                  "pixels", lambda ctx: ctx._b * 4),
+                                                                              ),
+                                                               )),
+                                               2: Embed(Struct("",
+                                                               Bytes(
+                                                                   "_pixel", 4),
+                                                               StrictRepeater(get_run_length,
+                                                                              Value(
+                                                                                  "pixels", lambda ctx: ctx._pixel),
+                                                                              ),
+                                                               )),
+                                               3: Embed(Struct("",
+                                                               StrictRepeater(get_run_length,
+                                                                              Bytes(
+                                                                                  "pixels", 4),
+                                                                              ),
+                                                               )),
+                                           }),
+                                           )
+                                )
+                                )
 
     @classmethod
     def from_byte_array(cls, bytes_):
@@ -528,11 +548,9 @@ class Bitmap(FixedObjectByteArray):
         data = "".join(itertools.chain.from_iterable(pixels))
         return cls(data)
 
-
     def compress(self):
         """Compress to a ByteArray"""
         raise NotImplementedError
-
 
 
 class Form(FixedObject, ContainsRefs):
@@ -548,12 +566,12 @@ class Form(FixedObject, ContainsRefs):
 
     classID = 34
     _construct = Struct("form",
-        Rename("width", field),
-        Rename("height", field),
-        Rename("depth", field),
-        Rename("privateOffset", field),
-        Rename("bits", field), # Bitmap
-    )
+                        Rename("width", field),
+                        Rename("height", field),
+                        Rename("depth", field),
+                        Rename("privateOffset", field),
+                        Rename("bits", field),  # Bitmap
+                        )
 
     def __init__(self, **fields):
         self.width = 0
@@ -612,12 +630,12 @@ class Form(FixedObject, ContainsRefs):
             # This is way faster than doing different bit-shifting ops to get
             # each pixel depending on depth.
 
-            multicolors = itertools.product(colors, repeat=8//self.depth)
+            multicolors = itertools.product(colors, repeat=8 // self.depth)
             multicolors = [bytearray(b'').join(multicolor)
                            for multicolor in multicolors]
 
             wide_argb_array = bytearray(b'').join(
-                    operator.itemgetter(*pixel_bytes)(multicolors))
+                operator.itemgetter(*pixel_bytes)(multicolors))
 
             # Rows are rounded to be a whole number of words (32 bits) long.
             # Presumably this is because Bitmaps are compressed (run-length
@@ -627,12 +645,12 @@ class Form(FixedObject, ContainsRefs):
             skip = (pixels_per_word - pixels_in_last_word) % pixels_per_word
 
             out_rowlen = self.width * 4
-            in_rowlen  = out_rowlen + skip * 4
+            in_rowlen = out_rowlen + skip * 4
             row_indexes = xrange(0, len(wide_argb_array), in_rowlen)
-            argb_array = bytearray(b'').join(wide_argb_array[i:i+out_rowlen]
-                                              for i in row_indexes)
+            argb_array = bytearray(b'').join(wide_argb_array[i:i + out_rowlen]
+                                             for i in row_indexes)
         else:
-            raise NotImplementedError # TODO: depth 16
+            raise NotImplementedError  # TODO: depth 16
 
         size = (self.width, self.height)
         return PIL.Image.frombuffer("RGBA", size, buffer(argb_array), "raw",
@@ -646,17 +664,18 @@ class Form(FixedObject, ContainsRefs):
         # Convert RGBA string to ARGB
         raw = ""
         for i in range(0, len(rgba_string), 4):
-            raw += rgba_string[i+3]   # alpha
-            raw += rgba_string[i:i+3] # rgb
+            raw += rgba_string[i + 3]   # alpha
+            raw += rgba_string[i:i + 3]  # rgb
 
         assert len(rgba_string) == width * height * 4
 
         return Form(
-            width = width,
-            height = height,
-            depth = 32,
-            bits = Bitmap(raw),
+            width=width,
+            height=height,
+            depth=32,
+            bits=Bitmap(raw),
         )
+
 
 class ColorForm(Form):
     """A rectangular array of pixels, used for holding images.
@@ -668,13 +687,6 @@ class ColorForm(Form):
     """
     classID = 35
     _construct = Struct("",
-        Embed(Form._construct),
-        Rename("colors", field), # Array
-    )
-
-
-
-
-
-
-
+                        Embed(Form._construct),
+                        Rename("colors", field),  # Array
+                        )
