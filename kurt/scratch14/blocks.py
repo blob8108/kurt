@@ -26,18 +26,18 @@ from kurt.scratch14.fixed_objects import Symbol
 from kurt.scratch14.blockspecs_src import *
 
 
-
 #-- Squeak blockspecs parser --#
 
 TOKENS = map(re.compile, [
     r"'()'",
     r"'(.*?[^\\])?'",
     r'#[~-]',
-    r'#([A-Za-z+*/\\<>=&|~:-]+)', # _=@%?!`^$
+    r'#([A-Za-z+*/\\<>=&|~:-]+)',  # _=@%?!`^$
     r'(-?[0-9]+(\.[0-9]+)?)',
     r'\(',
     r'\)',
 ])
+
 
 def tokenize(squeak_code):
     remain = str(squeak_code)
@@ -56,6 +56,7 @@ def tokenize(squeak_code):
                 break
         else:
             raise SyntaxError, "Unknown token at %r" % remain
+
 
 def parse(squeak_code):
     tokens = tokenize(squeak_code)
@@ -77,6 +78,7 @@ def parse(squeak_code):
         else:
             yield token
 
+
 def make_blocks(squeak_code):
     category = None
     for thing in parse(squeak_code):
@@ -89,7 +91,6 @@ def make_blocks(squeak_code):
                 (text, flag, command) = block[:3]
                 block = blockify(category, text, flag, command, block[3:])
             yield block
-
 
 
 #-- convert to kurt blocks --#
@@ -123,7 +124,7 @@ SHAPE_FLAGS = {
     'M': 'hat',
     'S': 'hat',
     's': 'stack',
-    't': 'stack', # timed blocks, all stack
+    't': 'stack',  # timed blocks, all stack
 }
 
 INSERT_SHAPES = {
@@ -134,35 +135,35 @@ INSERT_SHAPES = {
     '%c': 'color',         # color picker with menu [#hexcode]
     '%C': 'color',         # color [#hexcode]
 
-    '%m': 'readonly-menu', # morph reference [Sprite1 v]
-    '%a': 'readonly-menu', # attribute of sprite [x position v]
-    '%e': 'readonly-menu', # broadcast message [Play v]
-    '%k': 'readonly-menu', # key [space v]
+    '%m': 'readonly-menu',  # morph reference [Sprite1 v]
+    '%a': 'readonly-menu',  # attribute of sprite [x position v]
+    '%e': 'readonly-menu',  # broadcast message [Play v]
+    '%k': 'readonly-menu',  # key [space v]
 
-    '%v': 'readonly-menu', # variable [var v]
-    '%L': 'readonly-menu', # list name [list v]
+    '%v': 'readonly-menu',  # variable [var v]
+    '%L': 'readonly-menu',  # list name [list v]
     '%i': 'number-menu',   # item ( ) 1/last/any
     '%y': 'number-menu',   # delete line %y of list ( ) 1/last/all
 
-    '%f': 'readonly-menu', # math function [sqrt v]
+    '%f': 'readonly-menu',  # math function [sqrt v]
 
-    '%l': 'readonly-menu', # costume name [Costume1 v]
-    '%g': 'readonly-menu', # graphic effect menu [ghost v]
+    '%l': 'readonly-menu',  # costume name [Costume1 v]
+    '%g': 'readonly-menu',  # graphic effect menu [ghost v]
 
-    '%S': 'readonly-menu', # sound selector [meow v]
+    '%S': 'readonly-menu',  # sound selector [meow v]
     '%D': 'number-menu',   # MIDI drum (48 v)
     '%N': 'number-menu',   # MIDI note (60 v)
     '%I': 'number-menu',   # MIDI instrument (1 v)
 
-    '%h': 'readonly-menu', # Boolean sensor board selector menu
-    '%H': 'readonly-menu', # Numerical sensor board selector menu
-    '%W': 'readonly-menu', # motor direction
+    '%h': 'readonly-menu',  # Boolean sensor board selector menu
+    '%H': 'readonly-menu',  # Numerical sensor board selector menu
+    '%W': 'readonly-menu',  # motor direction
 }
 
 INSERT_KINDS = {
     '%d': 'direction',
 
-    '%m': 'spriteOrMouse', # most of the time
+    '%m': 'spriteOrMouse',  # most of the time
     '%a': 'attribute',
     '%e': 'broadcast',
     '%k': 'key',
@@ -200,13 +201,14 @@ OVERRIDE_DEFAULTS = {
 MATCH_COMMANDS = {
     'KeyEventHatMorph': 'whenKeyPressed',
     'drum:duration:elapsed:from:': 'playDrum',
-    '\\\\': '%', # modulo
+    '\\\\': '%',  # modulo
     'midiInstrument:': 'instrument:',
     'nextBackground': 'nextScene',
     'showBackground:': 'startScene',
 }
 
 INSERT_RE = re.compile(r'(%.(?:\.[A-z]+)?)')
+
 
 def blockify(category, text, flag, command, defaults):
     if command in IGNORE_COMMANDS:
@@ -237,7 +239,7 @@ def blockify(category, text, flag, command, defaults):
         parts += [kurt.Insert("stack")]
 
     pbt = kurt.PluginBlockType(category, shape, command, parts,
-            match=match)
+                               match=match)
 
     # fix insert kinds
     if command == 'getAttribute:of:':
@@ -254,36 +256,35 @@ def blockify(category, text, flag, command, defaults):
     return pbt
 
 
-
 #-- build lists --#
 
 block_list = (list(make_blocks(squeak_blockspecs)) +
-    list(make_blocks(squeak_stage_blockspecs)) +
-    list(make_blocks(squeak_sprite_blockspecs)) +
-    list(make_blocks(squeak_obsolete_blockspecs)))
+              list(make_blocks(squeak_stage_blockspecs)) +
+              list(make_blocks(squeak_sprite_blockspecs)) +
+              list(make_blocks(squeak_obsolete_blockspecs)))
 
 block_list += [
     # variable reporters
     kurt.PluginBlockType('variables', 'reporter', 'readVariable',
-        [kurt.Insert('inline', 'var', default='var')]),
+                         [kurt.Insert('inline', 'var', default='var')]),
     kurt.PluginBlockType('variables', 'reporter', 'contentsOfList:',
-        [kurt.Insert('inline', 'list', default='list')]),
+                         [kurt.Insert('inline', 'list', default='list')]),
 
     # Blocks with different meaning depending on arguments are special-cased
     # inside load_block/save_block.
     kurt.PluginBlockType('control', 'hat', 'whenGreenFlag',
-        ['when green flag clicked']),
+                         ['when green flag clicked']),
     kurt.PluginBlockType('control', 'hat', 'whenIReceive',
-        ['when I receive ', kurt.Insert('readonly-menu', 'broadcast')]),
+                         ['when I receive ', kurt.Insert('readonly-menu', 'broadcast')]),
 
     # changeVariable is special-cased (and isn't in blockspecs)
     kurt.PluginBlockType('variables', 'stack', 'changeVar:by:', ['change ',
-        kurt.Insert('readonly-menu', 'var'), ' by ', kurt.Insert('number')]),
+                                                                 kurt.Insert('readonly-menu', 'var'), ' by ', kurt.Insert('number')]),
     kurt.PluginBlockType('variables', 'stack', 'setVar:to:', ['set ',
-        kurt.Insert('readonly-menu', 'var'), ' to ', kurt.Insert('string')]),
+                                                              kurt.Insert('readonly-menu', 'var'), ' to ', kurt.Insert('string')]),
 
     # MouseClickEventHatMorph is special-cased as it has an extra argument:
     # 'when %m clicked'
     kurt.PluginBlockType('control', 'hat', 'whenClicked',
-        ['when clicked']),
+                         ['when clicked']),
 ]

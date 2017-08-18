@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2012 Tim Radvan
 #
 # This file is part of Kurt.
@@ -26,79 +29,108 @@ for boolean shaped blocks is not supported.
 
 """
 
-import re
 from collections import OrderedDict
 
 import kurt
-
-
+import re
 
 #-- Tokens --#
 
+
 class Token(object):
+
     def __init__(self, value):
         self.value = value
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
+
 
 class symbol(Token):
     lbp = 0
 
+
 class literal(Token):
+
     def nud(self):
         return self.value
 
+
 class number(Token):
+
     def __init__(self, value):
         value = float(value)
+
         if int(value) == value:
             value = int(value)
+
         self.value = value
+
     def nud(self):
         return self
+
 
 class string(Token):
     lbp = 0
+
     def nud(self):
         return self
 
+
 class color(Token):
+
     def nud(self):
         self.value = kurt.Color(self.value)
+
         return self
+
 
 class lparen(Token):
     lbp = 0
+
     def nud(self):
         global token
         contents = expression()
-        if isinstance(contents, rparen): # empty brackets
+
+        if isinstance(contents, rparen):  # empty brackets
             return
+
         if not isinstance(token, rparen):
             raise SyntaxError("Expected bracket to match %s" % self.value)
+
         token = next()
+
         return contents
+
 
 class rparen(Token):
     lbp = 0
+
     def nud(self):
         return self
+
 
 class newline(symbol):
     name = "EOL"
     lbp = 3
+
     def nud(self):
         return []
+
     def led(self, left):
         if isinstance(left, kurt.Block):
             left = [left]
+
         return left
+
 
 class end_token(Token):
     name = "EOF"
     lbp = 0
+
     def __init__(self):
         self.value = None
+
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
@@ -115,14 +147,19 @@ def inline_blocks():
         if len(block.inserts) == 1 and block.inserts[0].shape == "inline":
             yield block
 
+
 def all_the_blocks():
     for block in kurt.plugin.Kurt.blocks:
         done_text = set()
+
         for block in block.conversions:
             if block.text in done_text:
                 continue
+
             yield block
+
             done_text.add(block.text)
+
 
 def match_part(part, block_part):
     if isinstance(block_part, kurt.Insert):
@@ -130,39 +167,48 @@ def match_part(part, block_part):
     else:
         return (block_part.strip() == part)
 
+
 def blocks_starting_with(parts):
     suppress_blocks = set(suppress_block_names())
 
     for block in all_the_blocks():
         if len(parts) > len(block.parts):
             continue
+
         if (isinstance(block.parts[0], basestring)
                 and block.parts[0].strip() in suppress_blocks):
             continue
+
         for (p, bp) in zip(parts, block.parts):
             if not match_part(p, bp):
                 break
         else:
             yield block
+
 
 def next_block_part(parts):
     for block in blocks_starting_with(parts):
         next_part = (block.parts[len(parts)]
                      if len(block.parts) > len(parts)
                      else None)
+
         if isinstance(next_part, basestring):
             next_part = next_part.strip()
+
         yield next_part
+
 
 def blocks_by_parts(parts):
     for block in all_the_blocks():
         if len(parts) != len(block.parts):
             continue
+
         for (p, bp) in zip(parts, block.parts):
             if not match_part(p, bp):
                 break
         else:
             yield block
+
 
 def block_from_parts(parts):
     args = []
@@ -211,9 +257,11 @@ def block_from_parts(parts):
                             arg = int(arg) if int(arg) == arg else arg
                         except ValueError:
                             pass
+
                     if isinstance(arg, (int, long, float, complex,
                                         kurt.Block)):
                         ok = True
+
                 if insert.shape in ("readonly-menu", "number-menu"):
                     if (str(arg) in insert.options(context)
                             or isinstance(arg, kurt.Block)):
@@ -221,8 +269,10 @@ def block_from_parts(parts):
 
             if not ok:
                 failure = "%r doesn't fit %s" % (arg, insert.shape)
+
                 if insert.kind:
                     failure += " " + insert.kind
+
                 break
             block_args.append(arg)
         else:
@@ -230,7 +280,9 @@ def block_from_parts(parts):
     else:
         throw("Wrong type of arguments to block: %s" % failure, repr(parts))
 
+
 class iden(Token):
+
     @property
     def lbp(self):
         return PRECEDENCE.get(self.value, 100)
@@ -256,7 +308,9 @@ class iden(Token):
 
     def parse_block(self, parts):
         global token
+
         self.parts = parts
+
         while 1:
             part = self.parse_one_part(parts)
             if part is not None:
@@ -265,6 +319,7 @@ class iden(Token):
                 parts.append(part)
             else:
                 block = block_from_parts(parts)
+
                 if isinstance(token, end_token):
                     return block
 
@@ -272,11 +327,14 @@ class iden(Token):
                     if not token.value == "end":
                         throw("Expected 'end' after C mouth")
                     token = next()
+
                 return block
 
     def parse_one_part(self, parts):
         global token, next
+
         expect = set(next_block_part(parts))
+
         if not expect:
             self.parts = parts
             throw("Can't find block %r" % parts)
@@ -293,12 +351,14 @@ class iden(Token):
             if token.value in text_segments:
                 part = token.value
                 token = next()
+
                 return part
 
             for insert in menu_inserts:
                 if token.value in insert.options(context):
                     part = token
                     token = next()
+
                     return part
 
         if None in expect:
@@ -310,7 +370,9 @@ class iden(Token):
                 part = []
             else:
                 part = expression(1)
+
             assert isinstance(part, list)
+
             return part
 
         if isinstance(token, (newline, end_token)):
@@ -344,8 +406,8 @@ TOKENS = [(re.compile(r), cls) for (r, cls) in [
     (r"\'([^']+)\'", string),
     (r'\(', lparen),
     (r'\)', rparen),
-#    (r'\<', lparen),
-#    (r'\>', rparen),
+    #    (r'\<', lparen),
+    #    (r'\>', rparen),
     (r'\n|\r|\r\n', newline),
 ]]
 
@@ -362,26 +424,34 @@ SEGMENT_ALIASES = {
     "turn cw": "turn @turnRight",
 }
 
+
 def make_block_tokens():
     for block in kurt.plugin.Kurt.blocks:
         for part in block.parts:
             if isinstance(part, basestring):
                 yield part.strip()
+
     for alias in SEGMENT_ALIASES:
         yield alias
 
+
 def make_menu_tokens():
     global context
+
     for kind in kurt.Insert.KIND_OPTIONS:
-        if kind == "broadcast": continue
+        if kind == "broadcast":
+            continue
+
         for o in kurt.Insert(None, kind).options(context):
             yield str(o)
+
 
 def suppress_block_names():
     for block in kurt.plugin.Kurt.blocks:
         if isinstance(block.parts[0], kurt.Insert):
             for o in block.parts[0].options(context):
                 yield o
+
 
 def tokenize(program):
     block_tokens = sorted(set(make_block_tokens()) | set(make_menu_tokens()))
@@ -390,8 +460,10 @@ def tokenize(program):
     block_tokens = filter(None, block_tokens)
 
     global remain, lineno
+
     remain = program
     lineno = 1
+
     while remain:
         m = WHITESPACE_PAT.match(remain)
         if m:
@@ -406,44 +478,59 @@ def tokenize(program):
                     contents = m.group(1)
                 else:
                     contents = m.group(0).strip()
+
                 yield cls(contents)
+
                 remain = remain[m.end():]
+
                 if cls == newline:
                     lineno += 1
+
                 break
         else:
             for value in block_tokens:
                 if remain.startswith(value):
                     after_value = remain[len(value):]
+
                     if not after_value or SEPARATOR_PAT.match(after_value[0]):
                         value = SEGMENT_ALIASES.get(value, value)
+
                         yield iden(value)
+
                         remain = after_value
+
                         break
             else:
                 throw("Unknown token at %r" % remain.split("\n")[0])
-    yield end_token()
 
+    yield end_token()
 
 
 #-- Parser --#
 
 p_input = ""
 
+
 def expression(rbp=0):
     global token
+
     t = token
     token = next()
     left = t.nud()
+
     if not hasattr(token, "lbp"):
         throw("Not an operator: %r" % token)
+
     while rbp < token.lbp:
         t = token
         token = next()
         left = t.led(left)
+
         if not hasattr(token, "lbp"):
             throw("Not an operator: %r" % token)
+
     return left
+
 
 def parse(program, scriptable):
     global token, next, context, p_input
@@ -455,12 +542,16 @@ def parse(program, scriptable):
     next = tokenize(program).next
     token = next()
     result = expression()
+
     if not isinstance(token, end_token):
         throw("Expected end of input")
+
     if isinstance(result, kurt.Block):
         result = [result]
+
     if not isinstance(result, list):
         throw("Result does not evaluate to a block")
+
     return kurt.Script(result)
 
 
@@ -476,8 +567,8 @@ def throw(msg, hint=None, expected=None):
         msg += ". " + hint
 
     line = NEWLINE_PAT.split(p_input)[lineno - 1]
-    offset = len(p_input) - len(remain) #- len(token.value)
+    offset = len(p_input) - len(remain)  # - len(token.value)
     err = SyntaxError(msg, ('<string>', lineno, offset, line))
     err.expected = expected
-    raise err
 
+    raise err

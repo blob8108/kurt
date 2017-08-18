@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2012 Tim Radvan
 #
 # This file is part of Kurt.
@@ -18,7 +21,8 @@
 import re
 
 import kurt
-from kurt.scratch20.commands_src import commands, extras
+from kurt.scratch20.commands_src import commands
+from kurt.scratch20.commands_src_extras import commands_extra, extras
 
 
 CATEGORY_IDS = {
@@ -37,8 +41,8 @@ CATEGORY_IDS = {
     21: "wedo",
     30: "midi",
     91: "midi",
-    98: "obsolete", # --> we should use the 1.4 blockspecs for these instead
-    99: "obsolete", # scrolling
+    98: "obsolete",  # --> we should use the 1.4 blockspecs for these instead
+    99: "obsolete",  # scrolling
 
     # for stage?
     102: "looks",
@@ -50,10 +54,10 @@ CATEGORY_IDS = {
 SHAPE_FLAGS = {
     ' ':  'stack',
     'b':  'boolean',
-    'c':  'stack', # cblock
+    'c':  'stack',  # cblock
     'r':  'reporter',
-    'e':  'stack', # eblock
-    'cf': 'cap', # cblock
+    'e':  'stack',  # eblock
+    'cf': 'cap',  # cblock
     'f':  'cap',
     'h':  'hat',
 }
@@ -80,8 +84,10 @@ def parse_spec(spec, defaults):
         if INSERT_RE.match(part):
             default = defaults.pop(0) if defaults else None
             part = kurt.Insert(INSERT_SHAPES[part[:2]], part[3:] or None,
-                    default=default)
+                               default=default)
+
         yield part
+
 
 def make_spec(parts):
     spec = ""
@@ -89,10 +95,14 @@ def make_spec(parts):
         if isinstance(part, kurt.Insert):
             insert = part
             part = SHAPE_INSERTS[insert.shape]
+
             if insert.kind:
                 part += "." + insert.kind
+
         spec += part
+
     return spec
+
 
 def blockify(blockspec):
     if len(blockspec) > 1:
@@ -113,14 +123,19 @@ def blockify(blockspec):
         if pbt.text in ("wait until %s", "repeat until %s%s",
                         "forever if %s%s"):
             pbt.inserts[0].unevaluated = True
+
         return pbt
     else:
         return None
 
+
 def make_block_types():
     global commands
 
-    # Add extras
+    # add extra general commands
+    commands += commands_extra
+
+    # add extras
     for block in extras:
         if len(block) > 1:
             (flag, spec, command) = block[:3]
@@ -128,7 +143,7 @@ def make_block_types():
         else:
             commands.append(block)
 
-    # Add not-actually-blocks
+    # add not-actually-blocks
     commands += [
         ['%x.var', 'r', 9, 'readVariable', 'var'],
         ['%x.list', 'r', 12, "contentsOfList:", 'list'],
@@ -137,14 +152,16 @@ def make_block_types():
         ['%Z', ' ', 10, 'call'],
     ]
 
-    # Blockify
+    # blockify
     return map(blockify, commands)
+
 
 def custom_block(spec, input_names, defaults):
     input_names = list(input_names)
     parts = list(parse_spec(spec, defaults))
+
     for part in parts:
         if isinstance(part, kurt.Insert):
             part.name = input_names.pop(0)
-    return kurt.CustomBlockType("stack", parts)
 
+    return kurt.CustomBlockType("stack", parts)

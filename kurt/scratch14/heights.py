@@ -27,7 +27,6 @@ sys.path.insert(0, path_to_lib)
 import kurt
 
 
-
 def block_height(block):
     command = block.type.convert("scratch14").command
 
@@ -35,7 +34,7 @@ def block_height(block):
         'KeyEventHatMorph': 41,
         'whenGreenFlag': 43,
         'whenIReceive': 39,
-        'whenClicked': 38, # MouseClickEventHatMorph
+        'whenClicked': 38,  # MouseClickEventHatMorph
         'stopAll': 22,
     }
 
@@ -51,7 +50,7 @@ def block_height(block):
         if block.type.has_insert('readonly-menu'):
             height += 2
         elif block.type.has_insert('number') or \
-             block.type.has_insert('string'):
+                block.type.has_insert('string'):
             height += 1
 
         return height
@@ -120,4 +119,3 @@ def clean_up(scripts):
         elif isinstance(script, kurt.Comment):
             y += 14
         y += 15
-

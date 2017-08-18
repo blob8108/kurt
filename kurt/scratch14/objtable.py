@@ -27,9 +27,9 @@ from construct.text import Literal
 from functools import partial
 import inspect
 
-from inline_objects import field, Ref
 from fixed_objects import *
 import fixed_objects
+from inline_objects import field, Ref
 from user_objects import *
 
 
@@ -38,6 +38,7 @@ class ObjectAdapter(Adapter):
     The class must have a from_construct classmethod and a to_construct
     instancemethod.
     """
+
     def __init__(self, classes, *args, **kwargs):
         """Initialize an adapter for a new type/object(s).
         @param classes: class, list of classes, or dict of obj.class name to
@@ -76,7 +77,6 @@ class ObjectAdapter(Adapter):
         return cls.from_construct(obj, context)
 
 
-
 #-- Get object classes --#
 
 def obj_classes_from_module(module):
@@ -106,9 +106,11 @@ Stored in the object table. May contain references.
 
 """
 fixed_object = FixedObjectAdapter(Struct("fixed_object",
-    Enum(UBInt8("classID"), **fixed_object_ids_by_name),
-    Switch("value", lambda ctx: ctx.classID, fixed_object_cons_by_name),
-))
+                                         Enum(
+                                             UBInt8("classID"), **fixed_object_ids_by_name),
+                                         Switch(
+                                             "value", lambda ctx: ctx.classID, fixed_object_cons_by_name),
+                                         ))
 
 # User-class objects
 
@@ -116,20 +118,20 @@ user_object_ids_by_name = dict((v, k) for (k, v)
                                in user_object_class_ids.items())
 
 uo_struct = Struct("user_object",
-    Enum(UBInt8("classID"),
-        **user_object_ids_by_name
-    ),
-    UBInt8("version"),
-    UBInt8("length"),
-    Rename("values", MetaRepeater(lambda ctx: ctx.length, field)),
-)
+                   Enum(UBInt8("classID"),
+                        **user_object_ids_by_name
+                        ),
+                   UBInt8("version"),
+                   UBInt8("length"),
+                   Rename(
+                       "values", MetaRepeater(lambda ctx: ctx.length, field)),
+                   )
 
 """Construct for UserObjects.
 
 Stored in the object table. May contain references.
 """
 user_object = uo_struct
-
 
 
 #-- Object Table --#
@@ -141,6 +143,7 @@ class PythonicAdapter(Adapter):
     * Dictionary -- dict
     * Array -- list/tuple
     """
+
     def _encode(self, obj, context):
         if isinstance(obj, str):
             return String(obj)
@@ -165,7 +168,9 @@ class PythonicAdapter(Adapter):
         else:
             return obj
 
+
 class ObjectAdapter(Adapter):
+
     def _encode(self, obj, context):
         classID = getattr(obj, 'classID', getattr(obj, 'classID'))
         if classID in fixed_object_ids_by_name:
@@ -173,8 +178,8 @@ class ObjectAdapter(Adapter):
         elif classID in user_object_ids_by_name:
             classID = user_object_ids_by_name[classID]
         return Container(
-            classID = classID,
-            object = obj,
+            classID=classID,
+            object=obj,
         )
 
     def _decode(self, obj, context):
@@ -183,21 +188,23 @@ class ObjectAdapter(Adapter):
         return obj
 
 obj_table_entry = PythonicAdapter(ObjectAdapter(Struct("object",
-    Peek(UBInt8("classID")),
-    IfThenElse("object", lambda ctx: ctx.classID < 99,
-        fixed_object,
-        user_object,
-    ),
-)))
+                                                       Peek(UBInt8("classID")),
+                                                       IfThenElse("object", lambda ctx: ctx.classID < 99,
+                                                                  fixed_object,
+                                                                  user_object,
+                                                                  ),
+                                                       )))
 obj_table_entry.__doc__ = """Construct for object table entries, both
     UserObjects and FixedObjects."""
 
+
 class ObjectTableAdapter(Adapter):
+
     def _encode(self, objects, context):
         return Container(
-            header = "ObjS\x01Stch\x01",
-            length = len(objects),
-            objects = objects,
+            header="ObjS\x01Stch\x01",
+            length=len(objects),
+            objects=objects,
         )
 
     def _decode(self, table, context):
@@ -210,10 +217,13 @@ Includes "ObjS\\x01Stch\\x01" header.
 
 """
 obj_table = ObjectTableAdapter(Struct("object_table",
-    Const(Bytes("header", 10), "ObjS\x01Stch\x01"),
-    UBInt32("length"),
-    Rename("objects", MetaRepeater(lambda ctx: ctx.length, obj_table_entry)),
-))
+                                      Const(
+                                          Bytes("header", 10), "ObjS\x01Stch\x01"),
+                                      UBInt32("length"),
+                                      Rename(
+                                          "objects", MetaRepeater(lambda ctx: ctx.length, obj_table_entry)),
+                                      ))
+
 
 class InfoTableAdapter(Subconstruct):
     """Info ObjTable found in the project header.
@@ -239,11 +249,10 @@ class InfoTableAdapter(Subconstruct):
 info_table = InfoTableAdapter(obj_table)
 
 scratch_file = Struct("scratch_file",
-    Literal("ScratchV02"),
-    Rename("info", info_table),
-    Rename("stage", obj_table),
-)
-
+                      Literal("ScratchV02"),
+                      Rename("info", info_table),
+                      Rename("stage", obj_table),
+                      )
 
 
 #-- object network to/from table --#
@@ -258,7 +267,7 @@ def decode_network(objects):
             return obj
 
     # Reading the ObjTable backwards somehow makes more sense.
-    for i in xrange(len(objects)-1, -1, -1):
+    for i in xrange(len(objects) - 1, -1, -1):
         obj = objects[i]
 
         if isinstance(obj, Container):
@@ -297,6 +306,7 @@ def decode_network(objects):
     root = objects[0]
     return root
 
+
 def encode_network(root):
     """Yield ref-containing obj table entries from object network"""
     orig_objects = []
@@ -318,11 +328,11 @@ def encode_network(root):
                 objects.append(value)
                 index = len(objects)
                 value._tmp_index = index
-                orig_objects.append(value) # save the object so we can
-                                           # strip the _tmp_indexes later
+                orig_objects.append(value)  # save the object so we can
+                # strip the _tmp_indexes later
             return Ref(index)
         else:
-            return value # Inline value
+            return value  # Inline value
 
     def fix_fields(obj):
         obj = PythonicAdapter(Pass)._encode(obj, None)
@@ -331,7 +341,7 @@ def encode_network(root):
 
         if isinstance(obj, Container):
             obj.update((k, get_ref(v)) for (k, v) in obj.items()
-                                       if k != 'class_name')
+                       if k != 'class_name')
             fixed_obj = obj
 
         elif isinstance(obj, Dictionary):
@@ -380,12 +390,13 @@ def encode_network(root):
 
     return objects
 
+
 def encode_network(root):
     """Yield ref-containing obj table entries from object network"""
     def fix_values(obj):
         if isinstance(obj, Container):
             obj.update((k, get_ref(v)) for (k, v) in obj.items()
-                                       if k != 'class_name')
+                       if k != 'class_name')
             fixed_obj = obj
 
         elif isinstance(obj, Dictionary):
@@ -433,7 +444,7 @@ def encode_network(root):
                 objects[index - 1] = fix_values(obj)
             return Ref(index)
         else:
-            return obj # Inline value
+            return obj  # Inline value
 
     get_ref(root)
 
@@ -441,6 +452,7 @@ def encode_network(root):
         if getattr(obj, '_index', None):
             del obj._index
     return objects
+
 
 def decode_obj_table(table_entries, plugin):
     """Return root of obj table. Converts user-class objects"""
@@ -456,6 +468,7 @@ def decode_obj_table(table_entries, plugin):
         entries.append(entry)
 
     return decode_network(entries)
+
 
 def encode_obj_table(root, plugin):
     """Return list of obj table entries. Converts user-class objects"""
@@ -475,4 +488,3 @@ def encode_obj_table(root, plugin):
                               values=attrs.values())
         table_entries.append(entry)
     return table_entries
-

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2012 Tim Radvan
 #
 # This file is part of Kurt.
@@ -25,18 +28,18 @@ import hashlib
 import struct
 
 import kurt
-from kurt.plugin import Kurt, KurtPlugin
 
+from kurt.plugin import Kurt, KurtPlugin
 from kurt.scratch20.blocks import make_block_types, custom_block, make_spec
 
 
 SOUND_FORMATS = ['.wav']
 
 WATCHER_MODES = [None,
-    'normal',
-    'large',
-    'slider',
-]
+                 'normal',
+                 'large',
+                 'slider',
+                 ]
 
 CATEGORY_COLORS = {
     'variables': kurt.Color('#ee7d16'),
@@ -54,6 +57,7 @@ def get_blocks_by_id(this_block):
                 yield b
     elif isinstance(this_block, kurt.Block):
         yield this_block
+
         for arg in this_block.args:
             if isinstance(arg, kurt.Block):
                 for block in get_blocks_by_id(arg):
@@ -65,6 +69,7 @@ def get_blocks_by_id(this_block):
 
 
 class ZipReader(object):
+
     def __init__(self, fp):
         self.zip_file = zipfile.ZipFile(fp, "r")
         self.json = json.load(self.zip_file.open("project.json"))
@@ -77,10 +82,12 @@ class ZipReader(object):
         # files
         self.image_filenames = {}
         self.sound_filenames = {}
+
         for filename in self.zip_file.namelist():
             if filename == 'project.json':
                 continue
             (name, extension) = os.path.splitext(filename)
+
             if extension in SOUND_FORMATS:
                 self.sound_filenames[int(name)] = filename
             else:
@@ -107,7 +114,8 @@ class ZipReader(object):
         # watchers
         for actor in actors:
             if not isinstance(actor, kurt.Sprite):
-                if 'listName' in actor: continue
+                if 'listName' in actor:
+                    continue
                 actor = self.load_watcher(actor)
             self.project.actors.append(actor)
 
@@ -117,11 +125,13 @@ class ZipReader(object):
         if file_id not in self.loaded_images:
             if file_id not in self.image_filenames:
                 return None
+
             filename = self.image_filenames[file_id]
             (_, extension) = os.path.splitext(filename)
             contents = self.zip_file.open(filename).read()
             _format = kurt.Image.image_format(extension)
             self.loaded_images[file_id] = kurt.Image(contents, _format)
+
         return self.loaded_images[file_id]
 
     def read_waveform(self, file_id, rate, sample_count):
@@ -129,7 +139,7 @@ class ZipReader(object):
             filename = self.sound_filenames[file_id]
             contents = self.zip_file.open(filename).read()
             self.loaded_sounds[file_id] = kurt.Waveform(contents, rate,
-                    sample_count)
+                                                        sample_count)
         return self.loaded_sounds[file_id]
 
     def finish(self):
@@ -139,8 +149,7 @@ class ZipReader(object):
         if is_stage:
             scriptable = kurt.Stage(self.project)
         elif 'objName' in sd:
-            scriptable = kurt.Sprite(self.project,
-                    sd["objName"])
+            scriptable = kurt.Sprite(self.project, sd["objName"])
         else:
             return self.load_watcher(sd)
 
@@ -162,19 +171,20 @@ class ZipReader(object):
 
             if 'text' in cd:
                 text_layer = self.read_image(cd['textLayerID'])
+
                 if text_layer:
                     image = image.paste(text_layer)
 
             scriptable.costumes.append(kurt.Costume(cd['costumeName'], image,
-                rotation_center))
+                                                    rotation_center))
 
         # sounds
         for snd in sd.get("sounds", []):
-            scriptable.sounds.append(kurt.Sound(
-                snd['soundName'],
-                self.read_waveform(snd['soundID'], snd['rate'],
-                    snd['sampleCount'])
-            ))
+            scriptable.sounds.append(kurt.Sound(snd['soundName'],
+                                                self.read_waveform(snd['soundID'], snd['rate'],
+                                                                   snd['sampleCount'])
+                                                )
+                                     )
 
         # vars & lists
         target = self.project if is_stage else scriptable
@@ -186,15 +196,16 @@ class ZipReader(object):
         for ld in sd.get("lists", []):
             name = ld['listName']
             target.lists[name] = kurt.List(ld['contents'],
-                    ld['isPersistent'])
+                                           ld['isPersistent'])
             self.list_watchers.append(kurt.Watcher(target,
-                kurt.Block("contentsOfList:", name), is_visible=ld['visible'],
-                pos=(ld['x'], ld['y'])))
+                                                   kurt.Block("contentsOfList:", name), is_visible=ld['visible'],
+                                                   pos=(ld['x'], ld['y'])))
 
         # custom blocks first
         for script_array in sd.get("scripts", []):
             if script_array[2]:
                 block_array = script_array[2][0]
+
                 if block_array[0] == 'procDef':
                     (_, spec, input_names, defaults, is_atomic) = block_array
                     cb = custom_block(spec, input_names, defaults)
@@ -213,6 +224,7 @@ class ZipReader(object):
 
         for comment_array in sd.get("scriptComments", []):
             (x, y, w, h, expanded, block_id, text) = comment_array
+
             if block_id > -1:
                 blocks_by_id[block_id].comment = text
             else:
@@ -231,31 +243,34 @@ class ZipReader(object):
 
     def load_watcher(self, wd):
         command = 'readVariable' if wd['cmd'] == 'getVar:' else wd['cmd']
-        if wd['target'] == self.json['objName']: # Usually "Stage"
+        if wd['target'] == self.json['objName']:  # Usually "Stage"
             target = self.project
         else:
             target = self.project.get_sprite(wd['target'])
             assert target
+
         watcher = kurt.Watcher(target,
-            kurt.Block(command, *(wd['param'].split(',') if wd['param']
-                                                         else [])),
-            style=WATCHER_MODES[wd['mode']],
-            is_visible=wd['visible'],
-            pos=(wd['x'], wd['y']),
-        )
+                               kurt.Block(command, *(wd['param'].split(',') if wd['param']
+                                                     else [])),
+                               style=WATCHER_MODES[wd['mode']],
+                               is_visible=wd['visible'],
+                               pos=(wd['x'], wd['y']),
+                               )
         watcher.slider_min = wd['sliderMin']
         watcher.slider_max = wd['sliderMax']
+
         return watcher
 
     def load_block(self, block_array):
         block_array = list(block_array)
         command = block_array.pop(0)
 
-        if command == 'procDef': # CustomBlockType definition
+        if command == 'procDef':  # CustomBlockType definition
             spec = block_array[0]
+
             return kurt.Block('procDef', self.custom_blocks[spec])
 
-        if command == 'call': # CustomBlockType call
+        if command == 'call':  # CustomBlockType call
             block_type = self.custom_blocks[block_array.pop(0)]
         else:
             block_type = kurt.BlockType.get(command)
@@ -264,10 +279,11 @@ class ZipReader(object):
         args = []
         for arg in block_array:
             insert = inserts.pop(0) if inserts else None
+
             if isinstance(arg, list):
-                if isinstance(arg[0], list): # 'stack'-shaped Insert
+                if isinstance(arg[0], list):  # 'stack'-shaped Insert
                     arg = map(self.load_block, arg)
-                else: # Block
+                else:  # Block
                     arg = self.load_block(arg)
             elif insert:
                 if insert.shape == 'color':
@@ -288,6 +304,7 @@ class ZipReader(object):
     def load_script(self, script_array):
         (x, y, blocks) = script_array
         blocks = map(self.load_block, blocks)
+
         return kurt.Script(blocks, pos=(x, y))
 
     def load_color(self, value):
@@ -295,14 +312,15 @@ class ZipReader(object):
         value = struct.unpack('=I', struct.pack('=i', value))[0]
         # throw away leading ff, if any
         value &= 0x00ffffff
-        return kurt.Color(
-            (value & 0xff0000) >> 16,
-            (value & 0x00ff00) >> 8,
-            (value & 0x0000ff),
-        )
+
+        return kurt.Color((value & 0xff0000) >> 16,
+                          (value & 0x00ff00) >> 8,
+                          (value & 0x0000ff),
+                          )
 
 
 class ZipWriter(object):
+
     def __init__(self, fp, project):
         self.zip_file = zipfile.ZipFile(fp, "w")
         self.image_dicts = {}
@@ -316,9 +334,9 @@ class ZipWriter(object):
                 "comment": project.notes,
                 "author": project.author,
                 "scriptCount": sum(len(s.scripts)
-                    for s in [project.stage] + project.sprites),
+                                   for s in [project.stage] + project.sprites),
                 "spriteCount": len(project.sprites),
-                "hasCloudData": False, # TODO
+                "hasCloudData": False,  # TODO
                 "videoOn": False,
                 "userAgent": "",
                 "flashVersion": "",
@@ -331,6 +349,7 @@ class ZipWriter(object):
         sprites = {}
         for (i, sprite) in enumerate(project.sprites):
             sprites[sprite.name] = self.save_scriptable(sprite, i)
+
         for actor in project.actors:
             if isinstance(actor, kurt.Sprite):
                 actor = sprites[actor.name]
@@ -347,6 +366,7 @@ class ZipWriter(object):
 
     def write_file(self, name, contents):
         """Write file contents string into archive."""
+
         # TODO: find a way to make ZipFile accept a file object.
         zi = zipfile.ZipInfo(name)
         zi.date_time = time.localtime(time.time())[:6]
@@ -363,10 +383,11 @@ class ZipWriter(object):
             self.write_file(filename, image.contents)
 
             self.image_dicts[image] = {
-                "baseLayerID": image_id, # -1 for download
+                "baseLayerID": image_id,  # -1 for download
                 "bitmapResolution": 1,
                 "baseLayerMD5": hashlib.md5(image.contents).hexdigest() + ext,
             }
+
         return self.image_dicts[image]
 
     def write_waveform(self, waveform):
@@ -376,13 +397,14 @@ class ZipWriter(object):
             self.write_file(filename, waveform.contents)
 
             self.waveform_dicts[waveform] = {
-                "soundID": waveform_id, # -1 for download
+                "soundID": waveform_id,  # -1 for download
                 "md5": hashlib.md5(waveform.contents).hexdigest() + \
-                        waveform.extension,
+                waveform.extension,
                 "rate": waveform.rate,
                 "sampleCount": waveform.sample_count,
                 "format": "",
             }
+
         return self.waveform_dicts[waveform]
 
     def save_watcher(self, watcher):
@@ -403,10 +425,10 @@ class ZipWriter(object):
         return {
             'cmd': 'getVar:' if pbt.command == 'readVariable' else pbt.command,
             'param': ",".join(map(unicode, watcher.block.args))
-                    if watcher.block.args else None,
+            if watcher.block.args else None,
             'label': label,
             'target': ('Stage' if isinstance(watcher.target, kurt.Project)
-                               else watcher.target.name),
+                       else watcher.target.name),
             'mode': WATCHER_MODES.index(watcher.style),
             'sliderMax': watcher.slider_max,
             'sliderMin': watcher.slider_min,
@@ -424,7 +446,7 @@ class ZipWriter(object):
             "objName": scriptable.name,
             "currentCostumeIndex": scriptable.costume_index or 0,
             "scripts": filter(None, [self.save_script(s) for s in
-                scriptable.scripts]),
+                                     scriptable.scripts]),
             "scriptComments": [],
             "costumes": [self.save_costume(c) for c in scriptable.costumes],
             "sounds": [self.save_sound(c) for c in scriptable.sounds],
@@ -463,7 +485,7 @@ class ZipWriter(object):
         # sprite only
         if is_sprite:
             sd.update({
-                "indexInLibrary": i+1,
+                "indexInLibrary": i + 1,
                 "scratchX": scriptable.position[0],
                 "scratchY": scriptable.position[1],
                 "direction": scriptable.direction,
@@ -511,6 +533,7 @@ class ZipWriter(object):
             cb = block.args[0]
             spec = make_spec(cb.parts)
             input_names = [i.name for i in cb.inserts]
+
             return ['procDef', spec, input_names, cb.defaults, cb.is_atomic]
 
         args = []
@@ -541,12 +564,14 @@ class ZipWriter(object):
     def save_script(self, script):
         if isinstance(script, kurt.Script):
             (x, y) = script.pos or (10, 10)
+
             return [x, y, map(self.save_block, script.blocks)]
 
     def save_comment(self, comment):
         (x, y) = comment.pos
         expanded = True
         h = 200 if expanded else 19
+
         return [x, y, 150, h, expanded, -1, comment.text]
 
     def save_costume(self, costume):
@@ -557,6 +582,7 @@ class ZipWriter(object):
             "rotationCenterX": rx,
             "rotationCenterY": ry,
         })
+
         return cd
 
     def save_sound(self, sound):
@@ -564,13 +590,16 @@ class ZipWriter(object):
         snd.update({
             "soundName": sound.name,
         })
+
         return snd
 
     def save_color(self, color):
         # build RGB values
         value = (color.r << 16) + (color.g << 8) + color.b
+
         # convert unsigned to signed 32-bit int
         value = struct.unpack('=i', struct.pack('=I', value))[0]
+
         return value
 
 
@@ -588,13 +617,14 @@ class Scratch20Plugin(KurtPlugin):
         zl = ZipReader(fp)
         zl.project._original = zl.json
         zl.finish()
+
         return zl.project
 
     def save(self, fp, project):
         zw = ZipWriter(fp, project)
         zw.finish()
+
         return zw.json
 
-
-
+# register the current plugin
 Kurt.register(Scratch20Plugin())

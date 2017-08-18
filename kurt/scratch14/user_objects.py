@@ -31,7 +31,6 @@ from construct import Container
 from kurt.scratch14.fixed_objects import *
 
 
-
 #-- Class IDs --#
 
 user_object_class_ids = {
@@ -105,14 +104,15 @@ user_object_class_ids = {
 }
 
 
-
 #-- UserObject definition class --#
 
 class UserObjectDef(Container):
+
     def __init__(self, version, inherits, defaults=[]):
         self.version = int(version) if version else None
         self.inherits = str(inherits) if inherits else None
         self.defaults = OrderedDict(defaults)
+
 
 def make_user_objects(definitions):
     for obj in definitions.values():
@@ -126,7 +126,6 @@ def make_user_objects(definitions):
             attrs.update(parent.defaults)
         obj.defaults = attrs
     return definitions
-
 
 
 #-- UserObject definitions --#
